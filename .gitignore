@@ -1,0 +1,47 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C / C++ compiled files
+*.exe
+*.o
+*.obj
+*.dll
+*.so
+*.dylib
+
+# Virtual Environments
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Large Datasets & Raw Data (>100MB files that GitHub rejects)
+ml/data/raw/
+ml/data/interim/
+ml/data/processed/*.parquet
+
+# Temporary & Scratch Files
+*.log
+cell11_matches.txt
+clean_unsw_search.txt
+
+# Jupyter Notebook Checkpoints
+.ipynb_checkpoints/
+
+# IDE / Editor Files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS Generated Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Environment variables
+.env

@@ -1,0 +1,44 @@
+{
+  "system_version": "SentinelAI v1.0-RC",
+  "benchmark_A_in_distribution": {
+    "test_flows": 150000,
+    "binary_gatekeeper": {
+      "roc_auc": 0.95234,
+      "pr_auc": 0.97079,
+      "f1_score": 0.8722,
+      "attack_recall": 0.77636,
+      "precision": 0.99505,
+      "empirical_fpr": 0.00544,
+      "calibrated_threshold": 0.8265
+    },
+    "multiclass_attribution": {
+      "macro_f1": 0.8453,
+      "weighted_f1": 0.7947
+    }
+  },
+  "benchmark_B_zero_shot_cross_dataset": {
+    "test_flows": 92844,
+    "target_dataset": "UNSW-NB15",
+    "binary_gatekeeper": {
+      "zero_shot_roc_auc": 0.99889,
+      "zero_shot_pr_auc": 0.99936,
+      "zero_shot_f1": 0.99338,
+      "zero_shot_recall": 0.99155,
+      "empirical_fpr": 0.00918
+    },
+    "degradation_metrics": {
+      "roc_auc_degradation_pct": -4.89,
+      "f1_degradation_pct": -13.89
+    }
+  },
+  "sliced_fpr": {
+    "CSE_CIC_IDS2018_fpr_pct": 0.49,
+    "CIC_IDS2017_fpr_pct": 0.59,
+    "UNSW_NB15_fpr_pct": 1.0
+  },
+  "operational_performance": {
+    "median_single_flow_latency_us": 1828.7,
+    "batch_throughput_flows_per_sec": 258887.1,
+    "multiclass_throughput_flows_per_sec": 35269.9
+  }
+}

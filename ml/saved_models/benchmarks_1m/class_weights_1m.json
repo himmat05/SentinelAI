@@ -1,0 +1,11 @@
+{
+  "Botnet": 2.2222,
+  "Brute Force": 2.2222,
+  "DDoS": 2.2222,
+  "DoS": 2.2222,
+  "Infiltration": 0.6822,
+  "Normal": 0.2677,
+  "Other / Fuzzing": 2.9601,
+  "Reconnaissance": 0.6743,
+  "Web & Exploitation": 5.6443
+}

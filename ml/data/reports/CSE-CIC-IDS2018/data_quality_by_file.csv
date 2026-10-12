@@ -1,0 +1,11 @@
+File,Rows,Missing cells,Rows with missing values,Infinite cells,Header repeat rows,Duplicate rows,Duplicate percentage
+Friday-02-03-2018_TrafficForML_CICFlowMeter.csv,1048575,2558,2558,5542,0,5459,0.521
+Friday-16-02-2018_TrafficForML_CICFlowMeter.csv,1048575,0,0,0,1,137229,13.087
+Friday-23-02-2018_TrafficForML_CICFlowMeter.csv,1048575,3754,3754,7662,0,2614,0.249
+Thuesday-20-02-2018_TrafficForML_CICFlowMeter.csv,7948748,36767,36767,82139,0,2,0.0
+Thursday-01-03-2018_TrafficForML_CICFlowMeter.csv,331125,1834,1834,4004,25,73,0.022
+Thursday-15-02-2018_TrafficForML_CICFlowMeter.csv,1048575,4921,4921,11133,0,2421,0.231
+Thursday-22-02-2018_TrafficForML_CICFlowMeter.csv,1048575,3569,3569,7651,0,3278,0.313
+Wednesday-14-02-2018_TrafficForML_CICFlowMeter.csv,1048575,2277,2277,5371,0,225628,21.518
+Wednesday-21-02-2018_TrafficForML_CICFlowMeter.csv,1048575,0,0,0,0,17557,1.674
+Wednesday-28-02-2018_TrafficForML_CICFlowMeter.csv,613104,4041,4041,8297,33,6089,0.993

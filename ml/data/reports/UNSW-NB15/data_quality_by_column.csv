@@ -1,0 +1,11 @@
+File,Column,Missing,Infinite
+UNSW-NB15_1.csv,attack_cat,677785,0
+UNSW-NB15_2.csv,attack_cat,647252,0
+UNSW-NB15_2.csv,ct_flw_http_mthd,285256,0
+UNSW-NB15_2.csv,is_ftp_login,307038,0
+UNSW-NB15_3.csv,attack_cat,542576,0
+UNSW-NB15_3.csv,ct_flw_http_mthd,656405,0
+UNSW-NB15_3.csv,is_ftp_login,689429,0
+UNSW-NB15_4.csv,attack_cat,351150,0
+UNSW-NB15_4.csv,ct_flw_http_mthd,406484,0
+UNSW-NB15_4.csv,is_ftp_login,433412,0
