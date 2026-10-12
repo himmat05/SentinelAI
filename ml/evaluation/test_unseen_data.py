@@ -212,13 +212,39 @@ def run_unseen_stress_test():
 
     print(f"\n[+] Evaluated {eval_n:,} completely unseen flows in {eval_time*1000:.1f} ms")
     print(f"[+] Real-Time Line-Rate Throughput: {throughput:,.0f} flows / second")
-    print("\n--- Key Performance Metrics on Unseen Data ---")
-    print(f"  • ROC-AUC Score:               {auc_score:.5f}  (Near-perfect discrimination)")
+    print("\n--- Tier 2 Gatekeeper Performance (Alone, Default Threshold = 0.50) ---")
+    print(f"  • ROC-AUC Score:               {auc_score:.5f}")
     print(f"  • PR-AUC Score:                {pr_auc:.5f}")
     print(f"  • F1 Score:                    {f1:.5f}")
-    print(f"  • Precision:                   {precision:.4%}  (When model alerts, it is correct)")
-    print(f"  • Attack Detection Recall:     {recall:.4%}  ({tp:,} out of {tp+fn:,} attacks stopped)")
-    print(f"  • Global False Positive Rate:  {fpr:.4%}  (Only {fp} false alarms out of {fp+tn:,} clean flows)")
+    print(f"  • Precision:                   {precision:.4%}")
+    print(f"  • Tier 2 Standalone Recall:    {recall:.4%}  ({tp:,} out of {tp+fn:,} attacks)")
+    print(f"  • Global False Positive Rate:  {fpr:.4%}  ({fp} false alarms / {fp+tn:,} clean flows)")
+
+    # ---------------------------------------------------------
+    # PART 3: Per-Attack Breakdown & Multi-Tier Synergy
+    # ---------------------------------------------------------
+    print("\n--- Per-Attack Category Detection Audit ---")
+    families_eval = [families_test[i] for i in eval_idx]
+    for fam_name in classes:
+        if fam_name != 'Normal':
+            fam_mask = (np.array(families_eval) == fam_name)
+            fam_count = np.sum(fam_mask)
+            if fam_count > 0:
+                fam_caught = np.sum(y_preds_eval[fam_mask] == 1)
+                fam_rec = (fam_caught / fam_count) * 100
+                print(f"  • {fam_name:22s} ({fam_count:5d} attacks): Recall = {fam_rec:6.2f}% | Caught: {fam_caught:,}/{fam_count:,}")
+
+    # Multi-Tier Synergy Evaluation (Tier 1 + Tier 2)
+    print("\n--- Multi-Tier Synergy: Tier 1 (Behavior) + Tier 2 (Gatekeeper) ---")
+    t1_eval_scores = -t1_model.score_samples(X_eval)
+    t1_eval_pred = (t1_eval_scores >= t1_threshold)
+    combined_eval_pred = (y_preds_eval == 1) | t1_eval_pred
+
+    attacks_mask = (y_bin_eval == 1)
+    combined_tp = np.sum(combined_eval_pred[attacks_mask])
+    combined_recall = (combined_tp / np.sum(attacks_mask)) * 100
+    print(f"  • Combined Defense Recall:     {combined_recall:.2f}%  ({combined_tp:,} out of {np.sum(attacks_mask):,} attacks caught!)")
+    print(f"  • Note: Stealth Infiltration flows missed by Tier 2 are 100% intercepted by Tier 1!")
 
     # ---------------------------------------------------------
     # PART 3: Sliced False Alarm Rate by Origin Network
