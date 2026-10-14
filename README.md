@@ -22,7 +22,8 @@ docs/
     │   └── 06_exploratory_data_analysis_report.md
     ├── 05_feature_engineering_and_splitting/  <-- Stage 5: Scaling, transforms & dual-benchmark splits (Next)
     ├── 06_model_training/                     <-- Stage 6: Anomaly detection & multi-class training
-    └── 07_evaluation/                         <-- Stage 7: Cross-dataset generalization benchmarks
+    ├── 07_evaluation/                         <-- Stage 7: Cross-dataset generalization benchmarks
+    └── 08_explainability_shap/                <-- Stage 8: Explainable AI (XAI) with SHAP
 ```
 
 * 👉 **Read the Master Documentation Index**: [docs/README.md](docs/README.md)
@@ -33,6 +34,7 @@ docs/
 * 👉 **Read the Stage 6 Model Training & Threat Classification Report**: [docs/stages/06_model_training/09_tier2_tier3_supervised_classification_report.md](docs/stages/06_model_training/09_tier2_tier3_supervised_classification_report.md)
 * 👉 **Read the Stage 7 Model Evaluation & Explainability Report**: [docs/stages/07_evaluation/10_model_evaluation_explainability_report.md](docs/stages/07_evaluation/10_model_evaluation_explainability_report.md)
 * 👉 **Read the Full-Scale 20.4M Production Training Report**: [docs/stages/07_evaluation/11_full_scale_20m_production_training_report.md](docs/stages/07_evaluation/11_full_scale_20m_production_training_report.md)
+* 👉 **Read the Stage 8 Explainable AI (SHAP) Report**: [docs/stages/08_explainability_shap/README.md](docs/stages/08_explainability_shap/README.md)
 * 👉 **Read the Living Decision Changelog**: [docs/CHANGELOG.md](docs/CHANGELOG.md)
 
 ---

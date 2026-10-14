@@ -26,6 +26,7 @@ ml/data/processed/*.parquet
 
 # Temporary & Scratch Files
 *.log
+backend/data/
 cell11_matches.txt
 clean_unsw_search.txt
 
