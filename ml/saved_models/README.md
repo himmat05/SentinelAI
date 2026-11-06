@@ -25,6 +25,17 @@ ml/saved_models/
 
 ---
 
+## 💾 Training Dataset Provenance & Storage Note
+
+The production models in `production/` were trained on the unified **20.4M flow dataset** synthesized from CSE-CIC-IDS2018, CIC-IDS2017, and UNSW-NB15 ($18,389,537$ training flows).
+
+> [!NOTE]
+> Following full-scale training and zero-shot cross-dataset evaluation, all static raw and interim CSVs (~19+ GB) were safely pruned to conserve local disk space. For complete dataset provenance, transformation specifications, and reproducibility guidelines, see [`ml/data/README.md`](../data/README.md).
+>
+> All runtime inference, unit tests, and Streamlit demo streams run against the compact **1M transformed benchmark** ([`sentinel_1M_transformed.parquet`](../data/processed/sentinel_1M_transformed.parquet), $29.13\text{ MB}$).
+
+---
+
 ## 🚀 Active Production Models (`production/`)
 
 These are the primary models used by the **FastAPI inference engine** (`backend/`) and **real-time packet sniffer** (`network/`).

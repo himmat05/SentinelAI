@@ -24,7 +24,7 @@ from sklearn.metrics import (
     classification_report
 )
 
-DATA_PATH = "ml/data/processed/sentinel_20M_transformed.parquet"
+DATA_PATH = "ml/data/processed/sentinel_1M_transformed.parquet" if os.path.exists("ml/data/processed/sentinel_1M_transformed.parquet") else "ml/data/processed/sentinel_20M_transformed.parquet"
 TIER1_PATH = "ml/saved_models/production/tier1_anomaly_detector.joblib"
 TIER2_PATH = "ml/saved_models/production/tier2_binary_gatekeeper.joblib"
 TIER3_PATH = "ml/saved_models/production/tier3_threat_classifier.joblib"
