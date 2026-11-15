@@ -23,7 +23,8 @@ docs/
     ├── 05_feature_engineering_and_splitting/  <-- Stage 5: Scaling, transforms & dual-benchmark splits (Next)
     ├── 06_model_training/                     <-- Stage 6: Anomaly detection & multi-class training
     ├── 07_evaluation/                         <-- Stage 7: Cross-dataset generalization benchmarks
-    └── 08_explainability_shap/                <-- Stage 8: Explainable AI (XAI) with SHAP
+    ├── 08_explainability_shap/                <-- Stage 8: Explainable AI (XAI) with SHAP
+    └── 09_threat_intelligence/                <-- Stage 9: Threat Intelligence Ingestion & Exploration
 ```
 
 * 👉 **Read the Master Documentation Index**: [docs/README.md](docs/README.md)
@@ -35,6 +36,7 @@ docs/
 * 👉 **Read the Stage 7 Model Evaluation & Explainability Report**: [docs/stages/07_evaluation/10_model_evaluation_explainability_report.md](docs/stages/07_evaluation/10_model_evaluation_explainability_report.md)
 * 👉 **Read the Full-Scale 20.4M Production Training Report**: [docs/stages/07_evaluation/11_full_scale_20m_production_training_report.md](docs/stages/07_evaluation/11_full_scale_20m_production_training_report.md)
 * 👉 **Read the Stage 8 Explainable AI (SHAP) Report**: [docs/stages/08_explainability_shap/README.md](docs/stages/08_explainability_shap/README.md)
+* 👉 **Read the Stage 9 Threat Intelligence Exploration Report**: [docs/stages/09_threat_intelligence/12_threat_intelligence_exploration_report.md](docs/stages/09_threat_intelligence/12_threat_intelligence_exploration_report.md)
 * 👉 **Read the Living Decision Changelog**: [docs/CHANGELOG.md](docs/CHANGELOG.md)
 
 ---

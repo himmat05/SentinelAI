@@ -28,8 +28,13 @@ docs/
     │   └── README.md
     ├── 06_model_training/                     <-- Stage 6: Anomaly detection & multi-class classification
     │   └── README.md
-    └── 07_evaluation/                         <-- Stage 7: Cross-dataset generalization & SHAP explainability
-        └── README.md
+    ├── 07_evaluation/                         <-- Stage 7: Cross-dataset generalization & SHAP explainability
+    │   └── README.md
+    ├── 08_explainability_shap/                <-- Stage 8: Explainable AI (XAI) with SHAP
+    │   └── README.md
+    └── 09_threat_intelligence/                <-- Stage 9: Multi-source threat intelligence ingestion & RAG
+        ├── README.md
+        └── 12_threat_intelligence_exploration_report.md
 ```
 
 ---
@@ -45,6 +50,8 @@ docs/
 | **05** | **Feature Engineering & Data Splitting** | ✅ Completed | [07_feature_engineering_and_splitting_report.md](stages/05_feature_engineering_and_splitting/07_feature_engineering_and_splitting_report.md) |
 | **06** | **Model Training & Threat Classification** | ✅ Completed | [06_model_training/README.md](stages/06_model_training/README.md) |
 | **07** | **Evaluation & Full 20.4M Production Models** | ✅ Completed | [10_model_evaluation_explainability_report.md](stages/07_evaluation/10_model_evaluation_explainability_report.md) & [11_full_scale_20m_production_training_report.md](stages/07_evaluation/11_full_scale_20m_production_training_report.md) |
+| **08** | **Explainable AI (TreeSHAP XAI)** | ✅ Completed | [08_explainability_shap/README.md](stages/08_explainability_shap/README.md) |
+| **09** | **Threat Intelligence Ingestion & Exploration** | ✅ Completed | [09_threat_intelligence/12_threat_intelligence_exploration_report.md](stages/09_threat_intelligence/12_threat_intelligence_exploration_report.md) |
 
 ---
 

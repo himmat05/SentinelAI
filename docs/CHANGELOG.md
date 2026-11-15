@@ -4,6 +4,58 @@ This document tracks all significant decisions, discovered traps/bugs, schema mo
 
 ---
 
+### [2026-11-06] - Stage 09: Threat Intelligence RAG Vector Store & Autonomous SOC Agent
+
+#### Artifacts Produced
+* **Ingestion & Parser**: [`intelligence/rag/ingestion.py`](../intelligence/rag/ingestion.py) (Harmonizes MITRE ATT&CK, CISA KEV, NVD, and OWASP into $3,774$ unique chunks).
+* **Chunk Manifest**: [`intelligence/data/processed/threat_intel_chunks.json`](../intelligence/data/processed/threat_intel_chunks.json) ($3,774$ standardized threat vectors).
+* **Embedding Engine**: [`intelligence/rag/embeddings.py`](../intelligence/rag/embeddings.py) (Dense 384D semantic embeddings via `all-MiniLM-L6-v2` with offline execution).
+* **Vector Store & Hybrid Retrieval**: [`intelligence/rag/retrieval.py`](../intelligence/rag/retrieval.py) (Persistent local ChromaDB collection holding $3,774$ indexed vectors).
+* **SOC Security Tools**: [`intelligence/agent/tools.py`](../intelligence/agent/tools.py) (MITRE TTP lookup, CISA weaponization checking, and playbook retrieval).
+* **Autonomous Reasoning Workflow**: [`intelligence/agent/workflow.py`](../intelligence/agent/workflow.py) (Connects ML flow verdicts + SHAP factors to RAG knowledge).
+* **Incident Report Generator**: [`intelligence/agent/report_generator.py`](../intelligence/agent/report_generator.py) (Renders executive Markdown & JSON incident briefs).
+
+#### Empirical Milestones
+* **Offline Vector Indexing Completed**: 100% of $3,774$ threat intelligence chunks indexed into local ChromaDB with zero duplicate IDs and zero cloud API dependencies.
+* **Sub-Millisecond Semantic Querying**: Real-time nearest-neighbor similarity search benchmarked across MITRE, CISA, and OWASP.
+* **Automated Containment Matrix**: Implemented line-rate response policies (`QUARANTINE_HOST_AND_SEVER_SMB`, `RATE_LIMIT_AND_BGP_BLACKHOLE`, `APPLY_WAF_BLOCK`).
+* **End-to-End Incident Verification**: Verified complete investigation cycle for an Infiltration alert, generating executive brief `INC-20261106-2A44C5B4.md` with TreeSHAP decision drivers and mitigation playbooks.
+
+---
+
+### [2026-11-06] - Data Lifecycle: Post-Training Pruning & Storage Optimization
+
+#### Architectural Decision & Storage Rationale
+* **Decision**: Purged static raw and interim datasets post-training due to local disk space constraints, freeing **over 19 GB** of disk space while keeping production models and inference services 100% functional.
+* **Training Provenance**: Documented that production models in `ml/saved_models/production/` were trained and evaluated across **$20,432,819$ flows** ($18,389,537$ train / $2,043,282$ test) synthesized from CSE-CIC-IDS2018 ($16.2\text{M}$ flows), CIC-IDS2017 ($2.8\text{M}$ flows), and UNSW-NB15 ($1.4\text{M}$ flows).
+* **Pruned Partitions**:
+  * `ml/data/raw/` ($7.78\text{ GB}$): All 22 uncleaned raw CSV parts from the three source datasets.
+  * `ml/data/interim/` ($9.85\text{ GB}$): All interim merged raw CSVs and intermediate Parquet partitions.
+  * `ml/data/processed/merged_sentinel_core.parquet` ($645.78\text{ MB}$): Pre-transformed unified table.
+  * `ml/data/processed/sentinel_20M_transformed.parquet` ($742.08\text{ MB}$): Full-scale training parquet.
+* **Preserved Artifacts**:
+  * **Production Models**: All 5 models and scalers in `ml/saved_models/production/` ($29.5\text{ MB}$).
+  * **Test & Simulation Benchmark**: `ml/data/processed/sentinel_1M_transformed.parquet` ($29.13\text{ MB}$), preserving 100% of rare attack classes and powering the test suite (`test_unseen_data.py`) and Streamlit batch demo.
+  * **Evaluation Manifests**: `full_20m_evaluation_metrics.json` and `system_evaluation_metrics.json` preserving the exact empirical benchmark record.
+* **New Documentation**: Created [`ml/data/README.md`](../ml/data/README.md) detailing dataset provenance, reproducibility instructions, and storage management.
+
+---
+
+### [2026-10-14] - Stage 09: Threat Intelligence Ingestion & Exploratory Analysis
+* **Exploration Notebook**: [`intelligence/notebooks/01_document_processing_and_chunking.ipynb`](../intelligence/notebooks/01_document_processing_and_chunking.ipynb) (Complete 7-section exploratory analysis).
+* **Generation Script**: [`intelligence/notebooks/create_01_notebook.py`](../intelligence/notebooks/create_01_notebook.py) (Reproducible notebook synthesizer & executor).
+* **Documentation Report**: [`docs/stages/09_threat_intelligence/12_threat_intelligence_exploration_report.md`](stages/09_threat_intelligence/12_threat_intelligence_exploration_report.md).
+* **Stage Index**: [`docs/stages/09_threat_intelligence/README.md`](stages/09_threat_intelligence/README.md).
+
+#### Empirical Milestones
+* **MITRE ATT&CK Enterprise Matrix**: Ingested and profiled $26,690$ STIX 2.1 objects ($867$ active techniques, $750$ malware families, $193$ APT intrusion sets, $268$ mitigations, $21,819$ relationship edges).
+* **CISA Known Exploited Vulnerabilities (KEV)**: Analyzed $1,741$ weaponized CVEs actively exploited in the wild. Identified top exploited vendors (Microsoft, Cisco, Apple, Google, Adobe) and confirmed $18.6\%$ ransomware weaponization rate.
+* **NVD CVE & Metric Parsing**: Verified automated extraction of CVSS v2/v3 base scores, severity categories, and CWE-89 SQL injection weakness descriptors.
+* **OWASP Top 10 (2025 Release)**: Ingested 16 Markdown documentation files ($~1,950$ tokens/doc) and established heading-based boundary chunking on `##` and `###` headers.
+* **RAG Chunking Architecture Established**: Designed heterogeneous chunking pipeline separating atomic structured records (Entity-level chunks) from narrative Markdown playbooks (Semantic heading-aware chunks).
+
+---
+
 ### [2026-10-09] - Full-Scale 20.4M Production Model Training & Evaluation
 
 #### Artifacts Produced

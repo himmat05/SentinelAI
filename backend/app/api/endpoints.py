@@ -18,14 +18,35 @@ from backend.app.schemas.flow import (
     BatchPredictionResponse,
     ThreatAlert,
     AlertListResponse,
-    FlowExplanationResponse
+    FlowExplanationResponse,
+    InvestigationRequest,
+    ThreatIntelHit,
+    ThreatIntelSearchResponse
 )
 from backend.app.services.inference_engine import SentinelInferenceEngine
 from ml.explainability.shap_explainer import SentinelShapExplainer
+from intelligence.agent.workflow import IncidentInvestigationWorkflow
+from intelligence.agent.report_generator import IncidentReportGenerator
+from intelligence.rag.retrieval import ThreatIntelRetriever
 
 router = APIRouter()
 
 ALERTS_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../data/alerts_history.jsonl"))
+
+_workflow_instance: Optional[IncidentInvestigationWorkflow] = None
+_retriever_instance: Optional[ThreatIntelRetriever] = None
+
+def get_workflow() -> IncidentInvestigationWorkflow:
+    global _workflow_instance
+    if _workflow_instance is None:
+        _workflow_instance = IncidentInvestigationWorkflow()
+    return _workflow_instance
+
+def get_retriever() -> ThreatIntelRetriever:
+    global _retriever_instance
+    if _retriever_instance is None:
+        _retriever_instance = ThreatIntelRetriever()
+    return _retriever_instance
 
 
 class AlertStore:
@@ -125,12 +146,16 @@ alert_manager = AlertConnectionManager()
 @router.post("/predict", response_model=PredictionResponse, tags=["Inference"])
 async def predict_flow(
     flow: FlowData,
-    explain: bool = Query(default=False, description="Compute on-demand TreeSHAP feature attributions")
+    explain: bool = Query(default=False, description="Compute on-demand TreeSHAP feature attributions"),
+    investigate: bool = Query(default=False, description="Run autonomous RAG threat investigation if threat is detected"),
+    llm_provider: str = Query(default="deterministic", description="Reasoning engine: 'deterministic', 'ollama', 'gemini', 'openai'"),
+    llm_model: Optional[str] = Query(default=None, description="Specific model name (e.g. 'llama3.2', 'gemini-1.5-flash')"),
+    api_key: Optional[str] = Query(default=None, description="Optional API key for cloud LLMs")
 ):
     """
     Inspect a single network flow in real-time (sub-100 microsecond wire speed).
     Evaluates Tier 1 + Tier 2 in parallel, routes intrusions to Tier 3,
-    and optionally computes SHAP explainability narratives.
+    and optionally computes SHAP explainability narratives and RAG playbooks.
     """
     engine = SentinelInferenceEngine.get_instance()
     result = engine.inspect_flow(flow)
@@ -162,6 +187,26 @@ async def predict_flow(
             print(f"[!] Warning: SHAP explanation generation skipped: {e}")
 
     result.explanation = explanation_payload
+
+    # Run RAG investigation if requested and intrusion detected
+    if investigate and result.is_threat:
+        try:
+            wf = get_workflow()
+            inv_report = wf.investigate_alert(
+                attack_family=result.threat_category,
+                confidence=result.confidence_pct / 100.0,
+                src_ip=flow.src_ip,
+                dst_ip=flow.dst_ip,
+                dst_port=flow.dst_port,
+                decisive_features=top_decisive,
+                anomaly_score=result.tier1_anomaly_score if result.tier1_anomaly_flag else None,
+                llm_provider=llm_provider,
+                llm_model=llm_model,
+                api_key=api_key
+            )
+            result.investigation = inv_report
+        except Exception as e:
+            print(f"[!] Warning: RAG investigation generation skipped: {e}")
 
     # If intrusion detected, record alert and broadcast live via WebSocket
     if result.is_threat:
@@ -321,3 +366,89 @@ async def websocket_alerts(websocket: WebSocket):
         alert_manager.disconnect(websocket)
     except Exception:
         alert_manager.disconnect(websocket)
+
+
+# ==============================================================================
+# AUTONOMOUS SOC AGENT & THREAT INTELLIGENCE (RAG) ENDPOINTS
+# ==============================================================================
+
+@router.post("/investigate", tags=["Autonomous SOC Agent (RAG)"])
+async def investigate_threat(req: InvestigationRequest):
+    """
+    Triggers an autonomous SOC investigation on a detected intrusion.
+    Correlates flow telemetry with MITRE ATT&CK TTPs, CISA KEV weaponization records,
+    and OWASP defense playbooks to formulate an incident containment brief.
+    """
+    # If event_id was provided, load historical alert data
+    if req.event_id:
+        alert = alert_store.get_by_id(req.event_id)
+        if not alert:
+            raise HTTPException(status_code=404, detail=f"Alert with ID {req.event_id} not found.")
+        threat_family = alert.threat_category
+        confidence = alert.tier2_confidence
+        src_ip = alert.src_ip
+        dst_ip = alert.dst_ip
+        dst_port = alert.dst_port
+        decisive_features = alert.top_decisive_factors or []
+        anomaly_score = None
+    else:
+        threat_family = req.threat_family or "Infiltration"
+        confidence = req.confidence or 0.95
+        src_ip = req.src_ip
+        dst_ip = req.dst_ip
+        dst_port = req.dst_port
+        decisive_features = req.decisive_features or []
+        anomaly_score = req.anomaly_score
+
+    try:
+        wf = get_workflow()
+        report = wf.investigate_alert(
+            attack_family=threat_family,
+            confidence=confidence,
+            src_ip=src_ip,
+            dst_ip=dst_ip,
+            dst_port=dst_port,
+            decisive_features=decisive_features,
+            anomaly_score=anomaly_score,
+            llm_provider=req.llm_provider,
+            llm_model=req.llm_model,
+            api_key=req.api_key
+        )
+
+        # Render Markdown report as well
+        generator = IncidentReportGenerator()
+        md_content = generator.generate_markdown(report)
+        report["markdown_brief"] = md_content
+
+        return report
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to generate RAG investigation: {str(e)}")
+
+
+@router.get("/threat-intel/search", response_model=ThreatIntelSearchResponse, tags=["Autonomous SOC Agent (RAG)"])
+async def search_threat_intel(
+    q: str = Query(..., min_length=2, description="Semantic search query (e.g., 'SQL injection bypass', 'SMB lateral movement')"),
+    category: Optional[str] = Query(default=None, description="Filter by ML attack class (e.g. 'Infiltration', 'Web Exploitation')"),
+    source: Optional[str] = Query(default=None, description="Filter by feed source ('mitre_attack', 'cisa_kev', 'owasp_top10', 'nvd')"),
+    limit: int = Query(default=5, ge=1, le=20, description="Max results to retrieve")
+):
+    """
+    Semantic similarity search over the 3,774 unified threat intelligence chunks
+    indexed in ChromaDB.
+    """
+    try:
+        retriever = get_retriever()
+        hits = retriever.search(
+            query=q,
+            n_results=limit,
+            category=category,
+            source=source
+        )
+        return ThreatIntelSearchResponse(
+            query=q,
+            total_results=len(hits),
+            results=[ThreatIntelHit(**h) for h in hits]
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to execute semantic search: {str(e)}")
+

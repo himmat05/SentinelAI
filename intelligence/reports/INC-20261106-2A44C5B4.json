@@ -1,0 +1,56 @@
+{
+  "incident_id": "INC-20261106-2A44C5B4",
+  "timestamp": "2026-11-06T17:41:15.031743+00:00",
+  "severity": "CRITICAL",
+  "verdict": "MALICIOUS",
+  "threat_family": "Infiltration",
+  "confidence": 0.9842,
+  "flow_context": {
+    "src_ip": "192.168.10.50",
+    "dst_ip": "10.0.0.12",
+    "dst_port": 445,
+    "anomaly_score": 0.0891,
+    "decisive_features": [
+      "traffic_symmetry_ratio (+2.14)",
+      "bwd_pkt_len_mean (-1.82)"
+    ]
+  },
+  "immediate_containment": {
+    "action": "QUARANTINE_HOST_AND_SEVER_SMB",
+    "description": "Isolate host from internal VLAN; sever SMB/RPC sessions (ports 445/139) to halt lateral movement."
+  },
+  "mitre_attribution": [
+    {
+      "identifier": "T1043",
+      "title": "Commonly Used Port",
+      "source": "mitre_attack",
+      "relevance_score": 0.4398
+    },
+    {
+      "identifier": "S1224",
+      "title": "CASTLETAP (Malware Family)",
+      "source": "mitre_attack",
+      "relevance_score": 0.4348
+    }
+  ],
+  "recommended_playbooks": [
+    {
+      "title": "Mitigation: Exfiltration Over Command and Control Channel Mitigation",
+      "source": "mitre_attack",
+      "identifier": "T1041",
+      "guidance": "[MITRE ATT&CK MITIGATION] T1041: Exfiltration Over Command and Control Channel Mitigation  Description: Mitigations for command and control apply. Network intrusion detection and prevention systems that use network signatures to identify traffic for specific adversary malware can be used to mitigate activity at the network level. Signatures are oft..."
+    },
+    {
+      "title": "Mitigation: Automated Exfiltration Mitigation",
+      "source": "mitre_attack",
+      "identifier": "T1020",
+      "guidance": "[MITRE ATT&CK MITIGATION] T1020: Automated Exfiltration Mitigation  Description: Identify unnecessary system utilities, scripts, or potentially malicious software that may be used to transfer data outside of a network, and audit and/or block them by using whitelisting (Citation: Beechey 2010) tools, like AppLocker, (Citation: Windows Commands JPCER..."
+    },
+    {
+      "title": "Mitigation: Exploit Public-Facing Application Mitigation",
+      "source": "mitre_attack",
+      "identifier": "T1190",
+      "guidance": "[MITRE ATT&CK MITIGATION] T1190: Exploit Public-Facing Application Mitigation  Description: Application isolation and least privilege help lesson the impact of an exploit. Application isolation will limit what other processes and system features the exploited target can access, and least privilege for service accounts will limit what permissions th..."
+    }
+  ]
+}

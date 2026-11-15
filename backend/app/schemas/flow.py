@@ -93,6 +93,9 @@ class PredictionResponse(BaseModel):
     
     # Optional Explainable AI (XAI) Attribution
     explanation: Optional[FlowExplanationResponse] = None
+    
+    # Optional RAG Autonomous Investigation Report
+    investigation: Optional[Dict[str, Any]] = None
 
 
 class BatchPredictionResponse(BaseModel):
@@ -126,5 +129,44 @@ class AlertListResponse(BaseModel):
     total_stored: int
     count_returned: int
     alerts: List[ThreatAlert]
+
+
+# ==============================================================================
+# RAG THREAT INTELLIGENCE & INVESTIGATION SCHEMAS
+# ==============================================================================
+
+class InvestigationRequest(BaseModel):
+    """Request payload to trigger autonomous SOC investigation."""
+    event_id: Optional[str] = Field(default=None, description="Existing alert event ID to investigate")
+    threat_family: Optional[str] = Field(default="Infiltration", description="Target attack family (e.g. Infiltration, DDoS, Web Exploitation)")
+    confidence: Optional[float] = Field(default=0.95, ge=0.0, le=1.0, description="Model confidence score")
+    src_ip: Optional[str] = Field(default="192.168.1.100", description="Origin source IP")
+    dst_ip: Optional[str] = Field(default="10.0.0.1", description="Target destination IP")
+    dst_port: Optional[int] = Field(default=445, description="Target destination service port")
+    decisive_features: Optional[List[str]] = Field(default_factory=list, description="Top SHAP feature drivers")
+    anomaly_score: Optional[float] = Field(default=None, description="Tier 1 behavioral anomaly score")
+    llm_provider: Optional[str] = Field(default="deterministic", description="Reasoning engine: 'deterministic', 'ollama', 'gemini', 'openai'")
+    llm_model: Optional[str] = Field(default=None, description="Specific model name (e.g. 'llama3.2', 'gemini-1.5-flash')")
+    api_key: Optional[str] = Field(default=None, description="API key for cloud LLMs (optional if set in env)")
+
+
+class ThreatIntelHit(BaseModel):
+    """Single threat intelligence document match from ChromaDB."""
+    chunk_id: str
+    score: float
+    title: str
+    source: str
+    category: str
+    identifier: str
+    severity: str
+    text: str
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class ThreatIntelSearchResponse(BaseModel):
+    """Search response wrapper for threat intelligence queries."""
+    query: str
+    total_results: int
+    results: List[ThreatIntelHit]
 
 
