@@ -13,93 +13,107 @@
 
   <!-- Master Top Navigation Bar -->
   <header class="soc-navbar" id="soc-navbar">
-    <div style="display: flex; align-items: center; gap: 1.5rem;">
-      <a href="#" class="brand-section">
-        <div class="brand-logo">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-          </svg>
-        </div>
-        <div>
-          <span class="brand-title">SentinelAI</span>
-          <span class="brand-tag">Autonomous SOC</span>
-        </div>
-      </a>
+    <!-- Top Row: Brand & System Controls -->
+    <div class="nav-top-row">
+      <div style="display: flex; align-items: center; gap: 1.25rem;">
+        <a href="#" class="brand-section">
+          <div class="brand-logo">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+          </div>
+          <div>
+            <span class="brand-title">SentinelAI</span>
+            <span class="brand-tag">Autonomous SOC</span>
+          </div>
+        </a>
 
-      <div class="system-status" id="system-health-pill">
-        <span class="pulse-dot"></span> SYSTEM ARMED (3-TIER)
+        <div class="system-status" id="system-health-pill">
+          <span class="pulse-dot"></span> SYSTEM ARMED (3-TIER)
+        </div>
+      </div>
+
+      <!-- Reasoning Provider Controller in Header -->
+      <div class="header-controls">
+        <div class="reasoning-control">
+          <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700;">REASONING:</span>
+          <select class="reasoning-select" id="reasoning-provider-select">
+            <option value="deterministic" selected>⚡ Deterministic (Fast Rules)</option>
+            <option value="gemini">🌐 Google Gemini (Cloud LLM)</option>
+            <option value="ollama">🦙 Ollama (Local LLM)</option>
+          </select>
+        </div>
+
+        <div id="gemini-config-group" style="display: none; align-items: center; gap: 0.5rem;">
+          <select class="reasoning-select" id="reasoning-model-select" style="background: var(--bg-surface); padding: 0.25rem 0.5rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); font-size: 0.75rem;">
+            <option value="gemini-flash-lite-latest" selected>gemini-flash-lite-latest</option>
+            <option value="gemini-3.8-flash">gemini-3.8-flash</option>
+            <option value="gemini-flash-latest">gemini-flash-latest</option>
+          </select>
+          <input type="password" id="gemini-api-key-input" placeholder="API Key (or via .env)" class="form-control" style="width: 140px; padding: 0.25rem 0.5rem; font-size: 0.75rem;" />
+        </div>
+
+        <a href="/docs" target="_blank" class="btn-cyber" style="font-size: 0.75rem; padding: 0.35rem 0.75rem;">
+          API Docs ↗
+        </a>
       </div>
     </div>
 
-    <!-- Central Tabs Navigation -->
-    <nav class="tabs-navigation">
-      <button class="tab-btn active" data-tab="tab-flow-inspector">
-        <span>🔍</span> Flow Inspector & XAI
-      </button>
-      <button class="tab-btn" data-tab="tab-batch-stream">
-        <span>⚡</span> Batch Stream (Stress Test)
-      </button>
-      <button class="tab-btn" data-tab="tab-threat-intel">
-        <span>🛡️</span> RAG Threat Intel & Playbooks
-      </button>
-      <button class="tab-btn" data-tab="tab-live-alerts">
-        <span>🚨</span> Live Alerts Stream
-      </button>
-      <button class="tab-btn" data-tab="tab-architecture">
-        <span>📈</span> Architecture & Stats
-      </button>
-    </nav>
+    <!-- Bottom Row: Navigation Ribbon & SOC Health -->
+    <div class="nav-bottom-row">
+      <nav class="tabs-navigation">
+        <button class="tab-btn active" data-tab="tab-flow-inspector">
+          <span>🔍</span> Flow Inspector & XAI
+        </button>
+        <button class="tab-btn" data-tab="tab-batch-stream">
+          <span>⚡</span> Batch Stream (Stress Test)
+        </button>
+        <button class="tab-btn" data-tab="tab-threat-intel">
+          <span>🛡️</span> RAG Threat Intel & Playbooks
+        </button>
+        <button class="tab-btn" data-tab="tab-live-alerts">
+          <span>🚨</span> Live Alerts Stream
+        </button>
+        <button class="tab-btn" data-tab="tab-architecture">
+          <span>📈</span> Architecture & Stats
+        </button>
+      </nav>
 
-    <!-- Reasoning Provider Controller in Header -->
-    <div style="display: flex; align-items: center; gap: 0.75rem;">
-      <div class="reasoning-control">
-        <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700;">REASONING:</span>
-        <select class="reasoning-select" id="reasoning-provider-select">
-          <option value="deterministic" selected>⚡ Deterministic (Fast Rules)</option>
-          <option value="gemini">🌐 Google Gemini (Cloud LLM)</option>
-          <option value="ollama">🦙 Ollama (Local LLM)</option>
-        </select>
+      <div style="font-size: 0.72rem; color: var(--text-muted); font-family: var(--font-mono); display: flex; align-items: center; gap: 0.75rem;">
+        <span>GATEWAY: <strong style="color: var(--accent-green);">127.0.0.1:8000</strong></span>
+        <span>LATENCY: <strong style="color: var(--accent-cyan);">&lt;150µs</strong></span>
       </div>
-
-      <div id="gemini-config-group" style="display: none; align-items: center; gap: 0.5rem;">
-        <select class="reasoning-select" id="reasoning-model-select" style="background: var(--bg-surface); padding: 0.3rem 0.5rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
-          <option value="gemini-flash-lite-latest" selected>gemini-flash-lite-latest</option>
-          <option value="gemini-3.8-flash">gemini-3.8-flash</option>
-          <option value="gemini-flash-latest">gemini-flash-latest</option>
-        </select>
-        <input type="password" id="gemini-api-key-input" placeholder="API Key (or via .env)" class="form-control" style="width: 140px; padding: 0.3rem 0.5rem; font-size: 0.75rem;" />
-      </div>
-
-      <a href="/docs" target="_blank" class="btn-cyber" style="font-size: 0.75rem; padding: 0.35rem 0.75rem;">
-        API Docs ↗
-      </a>
     </div>
   </header>
 
   <!-- Global Workspace -->
   <main class="soc-workspace">
 
-    <!-- KPI Metric Summary Bar -->
-    <div class="grid-4col" style="margin-bottom: 1.5rem;">
-      <div class="kpi-card">
-        <div class="kpi-title">Total Inspected Flows</div>
-        <div class="kpi-value" id="kpi-total-inspected">0</div>
-        <div class="kpi-sub">Line-rate evaluation pipeline</div>
+    <!-- Slim Horizontal Telemetry Ribbon -->
+    <div class="telemetry-strip">
+      <div class="telemetry-item">
+        <span class="telemetry-label">Inspected Flows:</span>
+        <span class="telemetry-value" id="kpi-total-inspected">0</span>
       </div>
-      <div class="kpi-card">
-        <div class="kpi-title">Intrusions Blocked</div>
-        <div class="kpi-value" id="kpi-threats-blocked" style="color: var(--accent-red);">0</div>
-        <div class="kpi-sub">Automated line-rate containment</div>
+      <div class="telemetry-sep"></div>
+      <div class="telemetry-item">
+        <span class="telemetry-label">Threats Blocked:</span>
+        <span class="telemetry-value" id="kpi-threats-blocked" style="color: var(--accent-red);">0</span>
       </div>
-      <div class="kpi-card">
-        <div class="kpi-title">Clean Traffic Allowed</div>
-        <div class="kpi-value" id="kpi-clean-allowed" style="color: var(--accent-green);">0</div>
-        <div class="kpi-sub">Normal transport baseline verified</div>
+      <div class="telemetry-sep"></div>
+      <div class="telemetry-item">
+        <span class="telemetry-label">Clean Allowed:</span>
+        <span class="telemetry-value" id="kpi-clean-allowed" style="color: var(--accent-green);">0</span>
       </div>
-      <div class="kpi-card">
-        <div class="kpi-title">Wire Decision Speed</div>
-        <div class="kpi-value" id="kpi-avg-latency" style="color: var(--accent-cyan);">&lt;150 µs</div>
-        <div class="kpi-sub">Multi-tier execution latency</div>
+      <div class="telemetry-sep"></div>
+      <div class="telemetry-item">
+        <span class="telemetry-label">Wire Decision Latency:</span>
+        <span class="telemetry-value" id="kpi-avg-latency" style="color: var(--accent-cyan);">&lt;150 µs</span>
+      </div>
+      <div class="telemetry-sep"></div>
+      <div class="telemetry-item">
+        <span class="telemetry-label">Active Defense Engine:</span>
+        <span style="font-size: 0.8rem; font-weight: 700; color: #a78bfa;">3-Tier Line-Rate + TreeSHAP</span>
       </div>
     </div>
 
@@ -107,7 +121,7 @@
          TAB 1: REAL-TIME FLOW INSPECTOR & XAI
          ========================================================================= -->
     <section id="tab-flow-inspector" class="tab-panel active">
-      <div class="grid-2col">
+      <div class="inspector-layout">
 
         <!-- Left Column: Flow Inputs & Telemetry -->
         <div class="soc-card">
@@ -121,7 +135,7 @@
           </div>
 
           <!-- Presets -->
-          <div class="preset-chips" id="preset-chips-container">
+          <div class="preset-grid" id="preset-chips-container">
             <!-- Dynamically populated -->
           </div>
 
@@ -274,34 +288,29 @@
                 <!-- Containment policy -->
               </div>
 
-              <div class="grid-2col">
-                <div>
-                  <div class="ai-box">
-                    <h4>1. Attack Narrative & Adversary Intent</h4>
-                    <p id="ai-narrative-text">...</p>
-                  </div>
-                  <div class="ai-box">
-                    <h4>2. Root Cause Analysis (Network Physics)</h4>
-                    <p id="ai-root-cause-text">...</p>
-                  </div>
-                </div>
+              <div class="ai-box">
+                <h4>1. Attack Narrative & Adversary Intent</h4>
+                <p id="ai-narrative-text">...</p>
+              </div>
 
-                <div>
-                  <div class="ai-box">
-                    <h4>3. SOC Responder Action Checklist</h4>
-                    <div id="ai-checklist-container">
-                      <!-- Dynamic checklist items -->
-                    </div>
-                  </div>
-                  
-                  <div style="margin-top: 1rem;">
-                    <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem;">
-                      Authoritative Mitigations (ChromaDB Vector Match)
-                    </div>
-                    <div id="ai-playbooks-container">
-                      <!-- Playbook cards -->
-                    </div>
-                  </div>
+              <div class="ai-box">
+                <h4>2. Root Cause Analysis (Network Physics)</h4>
+                <p id="ai-root-cause-text">...</p>
+              </div>
+
+              <div class="ai-box">
+                <h4>3. SOC Responder Action Checklist</h4>
+                <div id="ai-checklist-container">
+                  <!-- Dynamic checklist items -->
+                </div>
+              </div>
+              
+              <div style="margin-top: 1rem;">
+                <div style="font-size: 0.75rem; font-weight: 700; color: #c084fc; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.5rem;">
+                  Authoritative Mitigations (ChromaDB Vector Match)
+                </div>
+                <div id="ai-playbooks-container">
+                  <!-- Playbook cards -->
                 </div>
               </div>
             </div>
@@ -406,8 +415,8 @@
             </div>
           </div>
 
-          <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
-            <div class="form-group" style="margin: 0;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
+            <div class="form-group" style="grid-column: 1 / -1; margin: 0;">
               <label class="form-label">Query / Adversary Technique</label>
               <input type="text" id="threat-search-query" class="form-control" value="SQL injection bypass in web authentication" />
             </div>

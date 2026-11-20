@@ -6,7 +6,7 @@
 export const FLOW_PRESETS = {
   "infiltration_smb": {
     id: "infiltration_smb",
-    name: "Stealth Infiltration (SMB Lateral Copy)",
+    name: "Infiltration (SMB)",
     badge: "CRITICAL",
     color: "#ef4444",
     icon: "🕳️",
@@ -37,7 +37,7 @@ export const FLOW_PRESETS = {
 
   "web_sqli": {
     id: "web_sqli",
-    name: "Web Exploitation (SQL Injection / OWASP A05)",
+    name: "Web Exploit (SQLi)",
     badge: "HIGH",
     color: "#f59e0b",
     icon: "💉",
@@ -68,7 +68,7 @@ export const FLOW_PRESETS = {
 
   "ddos_udp": {
     id: "ddos_udp",
-    name: "Volumetric DDoS (UDP/SYN Flood)",
+    name: "DDoS (UDP Flood)",
     badge: "CRITICAL",
     color: "#ef4444",
     icon: "🌊",
@@ -99,7 +99,7 @@ export const FLOW_PRESETS = {
 
   "botnet_c2": {
     id: "botnet_c2",
-    name: "Botnet C2 Beaconing (Ares Cluster)",
+    name: "Botnet (C2 Beacon)",
     badge: "CRITICAL",
     color: "#ef4444",
     icon: "🤖",
@@ -130,7 +130,7 @@ export const FLOW_PRESETS = {
 
   "bruteforce_ssh": {
     id: "bruteforce_ssh",
-    name: "SSH Dictionary Assault (Brute Force)",
+    name: "Brute Force (SSH)",
     badge: "HIGH",
     color: "#f59e0b",
     icon: "🔑",
@@ -161,7 +161,7 @@ export const FLOW_PRESETS = {
 
   "normal_https": {
     id: "normal_https",
-    name: "Legitimate HTTPS Session (CDN / Benign)",
+    name: "Normal (HTTPS CDN)",
     badge: "NORMAL",
     color: "#10b981",
     icon: "🟢",
