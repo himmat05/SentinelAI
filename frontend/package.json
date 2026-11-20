@@ -1,0 +1,19 @@
+{
+  "name": "sentinel-ai-frontend",
+  "version": "1.0.0",
+  "description": "SentinelAI Autonomous SOC Threat Defense & Intelligence Console",
+  "private": true,
+  "scripts": {
+    "start": "npx serve . -p 3000",
+    "dev": "npx serve . -p 3000"
+  },
+  "keywords": [
+    "cybersecurity",
+    "intrusion-detection",
+    "rag",
+    "explainable-ai",
+    "sentinel-ai"
+  ],
+  "author": "SentinelAI Team",
+  "license": "Apache-2.0"
+}

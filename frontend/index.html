@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SentinelAI — Autonomous SOC Threat Defense & Intelligence Console</title>
+  
+  <link rel="stylesheet" href="src/css/main.css" />
+  <link rel="stylesheet" href="src/css/components.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛡️</text></svg>" />
+</head>
+<body>
+
+  <!-- Master Top Navigation Bar -->
+  <header class="soc-navbar" id="soc-navbar">
+    <div style="display: flex; align-items: center; gap: 1.5rem;">
+      <a href="#" class="brand-section">
+        <div class="brand-logo">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+        </div>
+        <div>
+          <span class="brand-title">SentinelAI</span>
+          <span class="brand-tag">Autonomous SOC</span>
+        </div>
+      </a>
+
+      <div class="system-status" id="system-health-pill">
+        <span class="pulse-dot"></span> SYSTEM ARMED (3-TIER)
+      </div>
+    </div>
+
+    <!-- Central Tabs Navigation -->
+    <nav class="tabs-navigation">
+      <button class="tab-btn active" data-tab="tab-flow-inspector">
+        <span>🔍</span> Flow Inspector & XAI
+      </button>
+      <button class="tab-btn" data-tab="tab-batch-stream">
+        <span>⚡</span> Batch Stream (Stress Test)
+      </button>
+      <button class="tab-btn" data-tab="tab-threat-intel">
+        <span>🛡️</span> RAG Threat Intel & Playbooks
+      </button>
+      <button class="tab-btn" data-tab="tab-live-alerts">
+        <span>🚨</span> Live Alerts Stream
+      </button>
+      <button class="tab-btn" data-tab="tab-architecture">
+        <span>📈</span> Architecture & Stats
+      </button>
+    </nav>
+
+    <!-- Reasoning Provider Controller in Header -->
+    <div style="display: flex; align-items: center; gap: 0.75rem;">
+      <div class="reasoning-control">
+        <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700;">REASONING:</span>
+        <select class="reasoning-select" id="reasoning-provider-select">
+          <option value="deterministic" selected>⚡ Deterministic (Fast Rules)</option>
+          <option value="gemini">🌐 Google Gemini (Cloud LLM)</option>
+          <option value="ollama">🦙 Ollama (Local LLM)</option>
+        </select>
+      </div>
+
+      <div id="gemini-config-group" style="display: none; align-items: center; gap: 0.5rem;">
+        <select class="reasoning-select" id="reasoning-model-select" style="background: var(--bg-surface); padding: 0.3rem 0.5rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+          <option value="gemini-flash-lite-latest" selected>gemini-flash-lite-latest</option>
+          <option value="gemini-3.8-flash">gemini-3.8-flash</option>
+          <option value="gemini-flash-latest">gemini-flash-latest</option>
+        </select>
+        <input type="password" id="gemini-api-key-input" placeholder="API Key (or via .env)" class="form-control" style="width: 140px; padding: 0.3rem 0.5rem; font-size: 0.75rem;" />
+      </div>
+
+      <a href="/docs" target="_blank" class="btn-cyber" style="font-size: 0.75rem; padding: 0.35rem 0.75rem;">
+        API Docs ↗
+      </a>
+    </div>
+  </header>
+
+  <!-- Global Workspace -->
+  <main class="soc-workspace">
+
+    <!-- KPI Metric Summary Bar -->
+    <div class="grid-4col" style="margin-bottom: 1.5rem;">
+      <div class="kpi-card">
+        <div class="kpi-title">Total Inspected Flows</div>
+        <div class="kpi-value" id="kpi-total-inspected">0</div>
+        <div class="kpi-sub">Line-rate evaluation pipeline</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Intrusions Blocked</div>
+        <div class="kpi-value" id="kpi-threats-blocked" style="color: var(--accent-red);">0</div>
+        <div class="kpi-sub">Automated line-rate containment</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Clean Traffic Allowed</div>
+        <div class="kpi-value" id="kpi-clean-allowed" style="color: var(--accent-green);">0</div>
+        <div class="kpi-sub">Normal transport baseline verified</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-title">Wire Decision Speed</div>
+        <div class="kpi-value" id="kpi-avg-latency" style="color: var(--accent-cyan);">&lt;150 µs</div>
+        <div class="kpi-sub">Multi-tier execution latency</div>
+      </div>
+    </div>
+
+    <!-- =========================================================================
+         TAB 1: REAL-TIME FLOW INSPECTOR & XAI
+         ========================================================================= -->
+    <section id="tab-flow-inspector" class="tab-panel active">
+      <div class="grid-2col">
+
+        <!-- Left Column: Flow Inputs & Telemetry -->
+        <div class="soc-card">
+          <div class="soc-card-header">
+            <div>
+              <div class="soc-card-title">
+                <span>📡</span> Inbound Network Flow Telemetry
+              </div>
+              <div class="soc-card-subtitle">Select a realistic threat preset or adjust transport parameters</div>
+            </div>
+          </div>
+
+          <!-- Presets -->
+          <div class="preset-chips" id="preset-chips-container">
+            <!-- Dynamically populated -->
+          </div>
+
+          <!-- Socket 5-Tuple -->
+          <div style="background: rgba(15, 23, 42, 0.5); padding: 0.75rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle); margin-bottom: 1rem;">
+            <div style="font-size: 0.7rem; font-weight: 700; color: var(--accent-cyan); text-transform: uppercase; margin-bottom: 0.5rem;">Socket 5-Tuple Metadata</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 100px; gap: 0.75rem;">
+              <div class="form-group" style="margin: 0;">
+                <label class="form-label">Source IP</label>
+                <input type="text" id="flow-src-ip" class="form-control" value="192.168.10.50" />
+              </div>
+              <div class="form-group" style="margin: 0;">
+                <label class="form-label">Destination IP</label>
+                <input type="text" id="flow-dst-ip" class="form-control" value="10.0.0.12" />
+              </div>
+              <div class="form-group" style="margin: 0;">
+                <label class="form-label">Target Port</label>
+                <input type="number" id="flow-dst-port" class="form-control" value="445" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Transport Physical Metrics -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+            <div class="form-group">
+              <label class="form-label">Duration (seconds)</label>
+              <input type="number" step="0.001" id="flow-duration" class="form-control" value="1.542" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Mean Inter-Arrival Time (s)</label>
+              <input type="number" step="0.001" id="flow-iat-mean" class="form-control" value="0.045" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Forward Packets</label>
+              <input type="number" id="flow-fwd-packets" class="form-control" value="48" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Backward Packets</label>
+              <input type="number" id="flow-bwd-packets" class="form-control" value="12" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Forward Payload Bytes</label>
+              <input type="number" id="flow-fwd-bytes" class="form-control" value="42100" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Backward Payload Bytes</label>
+              <input type="number" id="flow-bwd-bytes" class="form-control" value="1840" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Fwd Packet Mean Size (B)</label>
+              <input type="number" step="0.1" id="flow-fwd-len-mean" class="form-control" value="877.0" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Bwd Packet Mean Size (B)</label>
+              <input type="number" step="0.1" id="flow-bwd-len-mean" class="form-control" value="153.3" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Throughput (Bytes/sec)</label>
+              <input type="number" step="0.1" id="flow-bytes-sec" class="form-control" value="28495.0" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Velocity (Packets/sec)</label>
+              <input type="number" step="0.1" id="flow-pkts-sec" class="form-control" value="38.9" />
+            </div>
+          </div>
+
+          <!-- Hidden auxiliary timing fields -->
+          <input type="hidden" id="flow-fwd-iat-mean" value="0.038" />
+          <input type="hidden" id="flow-bwd-iat-mean" value="0.052" />
+          <input type="hidden" id="flow-fwd-win" value="0.12" />
+          <input type="hidden" id="flow-bwd-win" value="0.85" />
+
+          <!-- Traffic Symmetry Slider -->
+          <div class="form-group" style="margin-top: 0.5rem; margin-bottom: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.35rem;">
+              <span class="form-label" style="margin: 0;">Traffic Symmetry Ratio (Top SHAP KS Driver)</span>
+              <span id="symmetry-val" class="range-val">0.958</span>
+            </div>
+            <input type="range" min="0" max="1" step="0.005" id="flow-symmetry" class="form-range" value="0.958" />
+            <div style="display: flex; justify-content: space-between; font-size: 0.65rem; color: var(--text-muted); margin-top: 2px;">
+              <span>0.0 (Pure Inbound Download)</span>
+              <span>0.5 (Balanced)</span>
+              <span>1.0 (Pure Outbound Exfiltration)</span>
+            </div>
+          </div>
+
+          <button class="btn-cyber btn-cyber-primary btn-block" id="btn-execute-inspection" style="padding: 0.85rem; font-size: 0.95rem;">
+            <span>🛡️</span> Execute Multi-Tier Inspection & SHAP Attribution
+          </button>
+        </div>
+
+        <!-- Right Column: Autonomous Decision & XAI Output -->
+        <div>
+          <!-- Initial Welcome State -->
+          <div id="inspection-results" style="display: none;">
+            <!-- Hero Verdict Banner -->
+            <div id="verdict-hero-banner" class="verdict-banner blocked">
+              <!-- Dynamically populated -->
+            </div>
+
+            <!-- 3-Tier Pipeline Grid -->
+            <div class="tier-grid" id="tier-cards-container">
+              <!-- Dynamically populated -->
+            </div>
+
+            <!-- Local TreeSHAP Feature Attribution -->
+            <div class="soc-card" style="margin-bottom: 1.5rem;">
+              <div class="soc-card-header">
+                <div>
+                  <div class="soc-card-title">
+                    <span>🔬</span> Explainable AI (TreeSHAP Local Drivers)
+                  </div>
+                  <div class="soc-card-subtitle" id="shap-narrative-text">
+                    Local mathematical Shapley contribution to the attack margin
+                  </div>
+                </div>
+              </div>
+
+              <table class="waterfall-table">
+                <thead>
+                  <tr>
+                    <th>Feature Metric</th>
+                    <th>Observed Value</th>
+                    <th>SHAP Impact</th>
+                    <th>Influence Direction (Red = Attack / Blue = Benign)</th>
+                  </tr>
+                </thead>
+                <tbody id="shap-waterfall-rows">
+                  <!-- Dynamically populated -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- AI Autonomous Reasoning & Playbook -->
+            <div id="ai-investigation-container" class="ai-reasoning-panel" style="display: none;">
+              <div class="ai-reasoning-header">
+                <div class="ai-reasoning-title">
+                  <span>🧠</span> Autonomous AI Threat Attribution & Containment
+                </div>
+                <div class="ai-badge" id="ai-provider-badge">
+                  DETERMINISTIC (Rules)
+                </div>
+              </div>
+
+              <div id="ai-fallback-notice" style="display: none; padding: 0.6rem 0.85rem; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: var(--radius-sm); color: var(--accent-amber); font-size: 0.8rem; margin-bottom: 1rem;">
+                <!-- Fallback warning if any -->
+              </div>
+
+              <div id="ai-containment-policy" style="background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--radius-md); padding: 0.9rem 1.1rem; margin-bottom: 1rem;">
+                <!-- Containment policy -->
+              </div>
+
+              <div class="grid-2col">
+                <div>
+                  <div class="ai-box">
+                    <h4>1. Attack Narrative & Adversary Intent</h4>
+                    <p id="ai-narrative-text">...</p>
+                  </div>
+                  <div class="ai-box">
+                    <h4>2. Root Cause Analysis (Network Physics)</h4>
+                    <p id="ai-root-cause-text">...</p>
+                  </div>
+                </div>
+
+                <div>
+                  <div class="ai-box">
+                    <h4>3. SOC Responder Action Checklist</h4>
+                    <div id="ai-checklist-container">
+                      <!-- Dynamic checklist items -->
+                    </div>
+                  </div>
+                  
+                  <div style="margin-top: 1rem;">
+                    <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem;">
+                      Authoritative Mitigations (ChromaDB Vector Match)
+                    </div>
+                    <div id="ai-playbooks-container">
+                      <!-- Playbook cards -->
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Placeholder if not run yet -->
+          <div id="inspection-placeholder" class="soc-card" style="text-align: center; padding: 4rem 2rem;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">🛡️</div>
+            <h3 style="margin-bottom: 0.5rem;">Ready for Real-Time Flow Inspection</h3>
+            <p style="color: var(--text-secondary); max-width: 440px; margin: 0 auto 1.5rem auto; font-size: 0.9rem;">
+              Select an attack preset on the left and click <b>Execute Multi-Tier Inspection</b> to evaluate the 3-Tier AI pipeline, generate SHAP explanations, and trigger autonomous RAG playbooks.
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- =========================================================================
+         TAB 2: BATCH STREAM SIMULATION
+         ========================================================================= -->
+    <section id="tab-batch-stream" class="tab-panel">
+      <div class="soc-card" style="margin-bottom: 1.5rem;">
+        <div class="soc-card-header">
+          <div>
+            <div class="soc-card-title">
+              <span>⚡</span> High-Throughput Batch Stress Test Simulation
+            </div>
+            <div class="soc-card-subtitle">Streams held-out flows at wire speed to benchmark line-rate throughput and detection accuracy</div>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 2rem; max-width: 600px; margin-bottom: 1.25rem;">
+          <div style="flex: 1;">
+            <label class="form-label">Batch Stream Volume</label>
+            <input type="range" id="batch-size-slider" min="50" max="1000" step="50" value="200" class="form-range" oninput="document.getElementById('batch-size-label').textContent = this.value" />
+            <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted);">
+              <span>50 flows</span>
+              <span id="batch-size-label" style="color: var(--accent-cyan); font-weight: 700;">200</span>
+              <span>1,000 flows</span>
+            </div>
+          </div>
+
+          <button class="btn-cyber btn-cyber-primary" id="btn-run-batch" style="padding: 0.75rem 1.75rem; white-space: nowrap;">
+            <span>🚀</span> Stream & Neutralize Batch
+          </button>
+        </div>
+
+        <!-- Batch Results -->
+        <div id="batch-results-container" style="display: none;">
+          <div class="grid-4col" style="margin-bottom: 1.5rem;">
+            <div class="kpi-card">
+              <div class="kpi-title">Batch Size</div>
+              <div class="kpi-value" id="batch-stat-total">0</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-title">Threats Intercepted</div>
+              <div class="kpi-value" id="batch-stat-blocked" style="color: var(--accent-red);">0</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-title">Clean Traffic Allowed</div>
+              <div class="kpi-value" id="batch-stat-clean" style="color: var(--accent-green);">0</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-title">Batch Throughput</div>
+              <div class="kpi-value" id="batch-stat-throughput" style="color: var(--accent-cyan);">0 fps</div>
+              <div class="kpi-sub" id="batch-stat-latency">0.00 ms</div>
+            </div>
+          </div>
+
+          <table class="alert-feed-table">
+            <thead>
+              <tr>
+                <th>Attack Category</th>
+                <th>Security Action</th>
+                <th>Flow Count</th>
+                <th>Proportion</th>
+              </tr>
+            </thead>
+            <tbody id="batch-breakdown-rows">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================================
+         TAB 3: RAG THREAT INTEL & PLAYBOOKS
+         ========================================================================= -->
+    <section id="tab-threat-intel" class="tab-panel">
+      <div class="grid-2col">
+        <!-- Search Explorer -->
+        <div class="soc-card">
+          <div class="soc-card-header">
+            <div>
+              <div class="soc-card-title">
+                <span>🔎</span> Semantic Vector Search across Threat Feeds
+              </div>
+              <div class="soc-card-subtitle">Search 3,774 ChromaDB vectors across MITRE ATT&CK, CISA KEV, OWASP 2025, and NVD</div>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
+            <div class="form-group" style="margin: 0;">
+              <label class="form-label">Query / Adversary Technique</label>
+              <input type="text" id="threat-search-query" class="form-control" value="SQL injection bypass in web authentication" />
+            </div>
+            <div class="form-group" style="margin: 0;">
+              <label class="form-label">Source Feed</label>
+              <select id="threat-filter-source" class="form-control">
+                <option value="ALL">All Sources</option>
+                <option value="mitre_attack">MITRE ATT&CK</option>
+                <option value="cisa_kev">CISA KEV</option>
+                <option value="owasp_top10">OWASP 2025</option>
+                <option value="nvd">NVD CVEs</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin: 0;">
+              <label class="form-label">Threat Class</label>
+              <select id="threat-filter-category" class="form-control">
+                <option value="ALL">All Classes</option>
+                <option value="Infiltration">Infiltration</option>
+                <option value="Web Exploitation">Web Exploitation</option>
+                <option value="DDoS">DDoS</option>
+                <option value="DoS">DoS</option>
+                <option value="Botnet">Botnet</option>
+                <option value="Brute Force">Brute Force</option>
+              </select>
+            </div>
+          </div>
+
+          <button class="btn-cyber btn-cyber-primary btn-block" id="btn-search-threat-intel" style="margin-bottom: 1.25rem;">
+            <span>🔎</span> Search Vector Base
+          </button>
+
+          <div id="threat-search-results">
+            <!-- Search hits dynamically rendered -->
+          </div>
+        </div>
+
+        <!-- Autonomous Incident Simulator -->
+        <div class="soc-card">
+          <div class="soc-card-header">
+            <div>
+              <div class="soc-card-title">
+                <span>⚡</span> Autonomous Incident Triage Simulator
+              </div>
+              <div class="soc-card-subtitle">Simulate arbitrary SOC alert telemetry and test playbooks</div>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
+            <div class="form-group">
+              <label class="form-label">Attack Family</label>
+              <select id="sim-attack-family" class="form-control">
+                <option value="Infiltration" selected>Infiltration</option>
+                <option value="Web Exploitation">Web Exploitation</option>
+                <option value="DDoS">DDoS</option>
+                <option value="DoS">DoS</option>
+                <option value="Botnet">Botnet</option>
+                <option value="Brute Force">Brute Force</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Attribution Certainty (0.50 - 1.00)</label>
+              <input type="number" step="0.01" min="0.5" max="1.0" id="sim-confidence" class="form-control" value="0.98" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Target Port</label>
+              <input type="number" id="sim-port" class="form-control" value="445" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Top Decisive Feature (SHAP)</label>
+              <input type="text" id="sim-shap-feature" class="form-control" value="traffic_symmetry_ratio (+2.14)" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Source IP</label>
+              <input type="text" id="sim-src-ip" class="form-control" value="192.168.10.55" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Destination Target IP</label>
+              <input type="text" id="sim-dst-ip" class="form-control" value="10.0.0.12" />
+            </div>
+          </div>
+
+          <button class="btn-cyber btn-cyber-primary btn-block" id="btn-run-simulation" style="margin-bottom: 1.25rem;">
+            <span>🤖</span> Synthesize Autonomous Incident Brief
+          </button>
+
+          <!-- Simulator Output -->
+          <div id="sim-report-output" style="display: none; background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 1.25rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+              <span id="sim-report-id" style="font-family: var(--font-mono); font-weight: 700; color: var(--accent-cyan);">INC-20261119-01</span>
+              <span id="sim-report-sev" class="tier-badge alert">CRITICAL</span>
+            </div>
+            
+            <div id="sim-report-action" style="font-weight: 700; color: var(--accent-red); margin-bottom: 0.75rem; font-size: 0.85rem;">
+              <!-- Action -->
+            </div>
+
+            <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.35rem;">Attack Narrative:</div>
+            <p id="sim-narrative-text" style="font-size: 0.85rem; line-height: 1.5; color: var(--text-primary); margin-bottom: 0.75rem;"></p>
+
+            <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.35rem;">Root Cause Analysis:</div>
+            <p id="sim-root-cause-text" style="font-size: 0.85rem; line-height: 1.5; color: var(--text-secondary); margin-bottom: 0.75rem;"></p>
+
+            <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.35rem;">SOC Responder Checklist:</div>
+            <div id="sim-checklist-items"></div>
+
+            <div style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-top: 0.75rem; margin-bottom: 0.35rem;">Attributed TTPs:</div>
+            <ul id="sim-ttps-container" style="font-size: 0.8rem; padding-left: 1.25rem; color: var(--text-secondary);"></ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================================
+         TAB 4: LIVE ALERTS & WEBSOCKET BROADCAST
+         ========================================================================= -->
+    <section id="tab-live-alerts" class="tab-panel">
+      <div class="soc-card">
+        <div class="soc-card-header">
+          <div>
+            <div class="soc-card-title">
+              <span>🚨</span> Real-Time SOC Incident Alert Stream
+            </div>
+            <div class="soc-card-subtitle">Live WebSocket stream broadcasting intercepted network intrusions directly from the firewall gatekeeper</div>
+          </div>
+          <div id="ws-connection-status" class="system-status">
+            <span class="pulse-dot"></span> LIVE BROADCAST ARMED
+          </div>
+        </div>
+
+        <table class="alert-feed-table">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Severity</th>
+              <th>Threat Classification</th>
+              <th>Source Socket</th>
+              <th>Destination Socket</th>
+              <th>Enforced Firewall Action</th>
+            </tr>
+          </thead>
+          <tbody id="live-alert-rows">
+            <!-- Dynamically populated from WebSocket -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- =========================================================================
+         TAB 5: SYSTEM ARCHITECTURE & 20.4M DATASET PROVENANCE
+         ========================================================================= -->
+    <section id="tab-architecture" class="tab-panel">
+      <div class="grid-2col">
+        <div class="soc-card">
+          <div class="soc-card-header">
+            <div class="soc-card-title">
+              <span>⚙️</span> Multi-Tier AI Synergy Mechanics
+            </div>
+          </div>
+
+          <div style="font-size: 0.875rem; line-height: 1.6; color: var(--text-secondary);">
+            <p style="margin-bottom: 0.75rem;">
+              SentinelAI operates an active 3-tier synergistic pipeline configured in <b>Knob 1</b> mode:
+            </p>
+            <ul style="padding-left: 1.25rem; margin-bottom: 1rem;">
+              <li style="margin-bottom: 0.5rem;">
+                <b style="color: var(--text-primary);">Tier 1 (Behavioral Anomaly Sensor):</b> Unsupervised Isolation Forest trained exclusively on clean baseline network flows. Flags non-RFC deviant behaviors and zero-days with an empirical threshold of <code>0.0432</code>.
+              </li>
+              <li style="margin-bottom: 0.5rem;">
+                <b style="color: var(--text-primary);">Tier 2 (Binary Gatekeeper):</b> Supervised LightGBM trained on 20.4M flows with inverse class frequency weighting. Operates as the line-rate gatekeeper at threshold <code>0.50</code>.
+              </li>
+              <li>
+                <b style="color: var(--text-primary);">Tier 3 (MITRE Attribution):</b> 9-class supervised classifier attributing malicious traffic to canonical threat families and issuing targeted line-rate containment policies.
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="soc-card">
+          <div class="soc-card-header">
+            <div class="soc-card-title">
+              <span>📚</span> Empirical Training Dataset Provenance
+            </div>
+          </div>
+
+          <div style="font-size: 0.875rem; line-height: 1.6; color: var(--text-secondary);">
+            <p style="margin-bottom: 0.75rem;">
+              Production models were synthesized across <b>20,432,819 standardized network flows</b>:
+            </p>
+            <table class="alert-feed-table" style="margin-bottom: 1rem;">
+              <thead>
+                <tr>
+                  <th>Benchmark Source</th>
+                  <th>Flow Volume</th>
+                  <th>Primary Threat Domain</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><b>CSE-CIC-IDS2018</b></td>
+                  <td>16.2M flows (79.4%)</td>
+                  <td>Volumetric DDoS, Infiltration, Brute Force</td>
+                </tr>
+                <tr>
+                  <td><b>CIC-IDS2017</b></td>
+                  <td>2.8M flows (13.7%)</td>
+                  <td>PortScan Reconnaissance, DoS Slowloris</td>
+                </tr>
+                <tr>
+                  <td><b>UNSW-NB15</b></td>
+                  <td>1.4M flows (6.9%)</td>
+                  <td>Web Exploitation, Fuzzers, Backdoors</td>
+                </tr>
+              </tbody>
+            </table>
+            <p style="font-size: 0.8rem; color: var(--text-muted);">
+              Evaluated on 50,000 completely unseen flows, achieving <b>100% multi-tier recall</b> with an average decision latency of <b>153 microseconds</b>.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Application Bootstrap -->
+  <script type="module" src="src/js/app.js"></script>
+</body>
+</html>

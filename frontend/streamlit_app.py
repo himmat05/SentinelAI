@@ -14,6 +14,12 @@ import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 # Ensure project root is on sys.path
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if BASE_DIR not in sys.path:
@@ -66,14 +72,18 @@ st.markdown("""
 
 @st.cache_resource
 def load_sentinel_engines():
-    """Initializes and caches the inference and explainability singletons."""
-    with st.spinner("🚀 Arming SentinelAI 3-Tier AI Pipeline and TreeExplainers..."):
+    """Initializes and caches the inference, explainability, and RAG singletons."""
+    with st.spinner("🚀 Arming SentinelAI 3-Tier AI Pipeline, TreeExplainers & RAG Vector Engine..."):
         engine = SentinelInferenceEngine.get_instance()
         explainer = SentinelShapExplainer.get_instance()
-    return engine, explainer
+        from intelligence.agent.workflow import IncidentInvestigationWorkflow
+        from intelligence.rag.retrieval import ThreatIntelRetriever
+        workflow = IncidentInvestigationWorkflow()
+        retriever = ThreatIntelRetriever()
+    return engine, explainer, workflow, retriever
 
 
-engine, explainer = load_sentinel_engines()
+engine, explainer, workflow, retriever = load_sentinel_engines()
 
 # Header
 st.title("🛡️ SentinelAI: Autonomous Defense & XAI Console")
@@ -150,15 +160,46 @@ with st.sidebar:
     st.success("🟢 Tier 1: Behavioral Anomaly Sensor (Armed)")
     st.success("🟢 Tier 2: Binary Gatekeeper (Armed)")
     st.success(f"🟢 Tier 3: MITRE Threat Classifier ({len(engine.classes)} Armed)")
+    st.success("🟢 Stage 09: RAG Intelligence Engine (3,774 Vectors Armed)")
     st.info("⚡ TreeSHAP XAI: Sub-millisecond Engine Active")
+
+    st.markdown("---")
+    st.subheader("🤖 AI Reasoning Engine")
+    llm_choice = st.selectbox(
+        "Select Reasoning Provider:",
+        [
+            "⚡ Deterministic (Fast Offline Rules & RAG)",
+            "🦙 Local LLM (Ollama)",
+            "🌐 Cloud LLM (Google Gemini)"
+        ],
+        index=0,
+        help="Choose the reasoning engine that explains attack intent, root causes, and containment checklists."
+    )
+
+    selected_llm_provider = "deterministic"
+    selected_llm_model = None
+    selected_api_key = None
+
+    if "Ollama" in llm_choice:
+        selected_llm_provider = "ollama"
+        selected_llm_model = st.text_input("Ollama Model:", value="llama3.2", help="Local model (e.g. llama3.2, mistral, phi3)")
+        st.caption("Requires Ollama running on localhost:11434 (`ollama run llama3.2`). Falls back gracefully if offline.")
+    elif "Gemini" in llm_choice:
+        selected_llm_provider = "gemini"
+        selected_llm_model = st.selectbox("Gemini Model:", ["gemini-flash-lite-latest", "gemini-3.8-flash", "gemini-flash-latest"])
+        selected_api_key = st.text_input("Gemini API Key:", type="password", value=os.environ.get("GEMINI_API_KEY", ""), help="Pre-loaded from .env file if configured.")
+        st.caption("🟢 Connected to Google Gemini. Falls back to deterministic if key is empty or quota is reached.")
+    else:
+        st.caption("⚡ Zero-latency, zero-cost, 100% offline ground-truth synthesis with no external dependencies.")
 
 
 # Flow Data Input setup
 preset_data = PRESETS[preset_choice]
 
-tab_inspect, tab_batch, tab_global = st.tabs([
+tab_inspect, tab_batch, tab_rag, tab_global = st.tabs([
     "🔍 Real-Time Flow Inspection & XAI",
     "⚡ Batch Simulation (500 Flows)",
+    "🛡️ Autonomous RAG Threat Intelligence & Playbooks",
     "📈 Global Intelligence & Benchmarks"
 ])
 
@@ -331,6 +372,82 @@ with tab_inspect:
         ])
         st.dataframe(df_xai, use_container_width=True)
 
+    # Autonomous RAG Threat Intelligence & Playbook Integration (Stage 09)
+    if pred_res.is_threat:
+        st.markdown("---")
+        st.header("🛡️ Autonomous RAG Threat Intelligence & Mitigation Playbook")
+        
+        top_decisive = [f"{c['label']} ({c['shap_value']:+.2f})" for c in primary_dec.get('top_contributions', [])[:3]]
+        with st.spinner(f"🤖 Investigating alert with {selected_llm_provider.upper()} & RAG vector store..."):
+            inv_report = workflow.investigate_alert(
+                attack_family=pred_res.threat_category,
+                confidence=pred_res.confidence_pct / 100.0,
+                src_ip=flow_payload.src_ip,
+                dst_ip=flow_payload.dst_ip,
+                dst_port=flow_payload.dst_port,
+                decisive_features=top_decisive,
+                anomaly_score=pred_res.tier1_anomaly_score if pred_res.tier1_anomaly_flag else None,
+                llm_provider=selected_llm_provider,
+                llm_model=selected_llm_model,
+                api_key=selected_api_key
+            )
+
+        sev = inv_report.get("severity", "HIGH")
+        sev_badge = "🔴 CRITICAL" if sev == "CRITICAL" else ("🟠 HIGH" if sev == "HIGH" else "🟡 MEDIUM")
+        
+        rag_col1, rag_col2 = st.columns([1, 1])
+        with rag_col1:
+            st.markdown(f"### Incident Assessment: **{sev_badge}**")
+            st.write(f"**Incident Reference ID:** `{inv_report.get('incident_id')}`")
+            containment = inv_report.get("immediate_containment", {})
+            st.error(f"**Automated Firewall Action:** `{containment.get('action')}`\n\n*{containment.get('description')}*")
+
+            st.markdown("#### Correlated MITRE TTPs & Malware Families")
+            attributions = inv_report.get("mitre_attribution", [])
+            if attributions:
+                for att in attributions:
+                    st.markdown(f"* **`{att.get('identifier')}`**: {att.get('title')} *(Source: `{att.get('source').upper()}`, Match: `{att.get('relevance_score'):.4f}`)*")
+            else:
+                st.write("No direct ATT&CK mappings identified.")
+
+        with rag_col2:
+            st.markdown("### Autonomous Containment Playbooks")
+            playbooks = inv_report.get("recommended_playbooks", [])
+            for pb in playbooks:
+                with st.expander(f"📘 [{pb.get('source').upper()}] {pb.get('title')}", expanded=True):
+                    st.write(pb.get("guidance"))
+
+        # AI Reasoning & Attack Narrative
+        reasoning = inv_report.get("reasoning", {})
+        if reasoning:
+            st.markdown("---")
+            st.subheader("🧠 Autonomous AI Attack Analysis & Root Cause Reasoning")
+            r_prov = reasoning.get("provider", "Deterministic").upper()
+            r_model = reasoning.get("model", "Rules")
+            r_lat = reasoning.get("latency_ms", 0.0)
+
+            if reasoning.get("is_fallback"):
+                st.warning(f"⚠️ **Provider Fallback Notice:** {reasoning.get('fallback_reason')}")
+
+            st.caption(f"Reasoning Engine: `{r_prov}` | Model: `{r_model}` | Synthesis Latency: `{r_lat:.1f} ms`")
+
+            rc1, rc2 = st.columns([1, 1])
+            with rc1:
+                st.markdown("#### 1. Attack Narrative & Adversary Intent")
+                st.info(reasoning.get("narrative", "N/A"))
+
+                st.markdown("#### 2. Root Cause Analysis (Network Physics & SHAP Drivers)")
+                st.write(reasoning.get("root_cause_analysis", "N/A"))
+
+            with rc2:
+                st.markdown("#### 3. SOC Responder Containment Checklist")
+                checklist = reasoning.get("containment_checklist", [])
+                if checklist:
+                    for c_idx, c_item in enumerate(checklist, 1):
+                        st.markdown(f"**{c_idx}.** {c_item}")
+                else:
+                    st.write("No automated checklist items.")
+
 
 # TAB 2: Batch Simulation
 with tab_batch:
@@ -392,7 +509,81 @@ with tab_batch:
         st.plotly_chart(fig_pie, use_container_width=True)
 
 
-# TAB 3: Global Model Intelligence & Benchmarks
+# TAB 3: Autonomous RAG Threat Intelligence & Playbooks
+with tab_rag:
+    st.header("🛡️ Autonomous Cyber Threat Intelligence & Playbook Retrieval (RAG)")
+    st.write("Sub-millisecond semantic reasoning engine powered by **ChromaDB** and **all-MiniLM-L6-v2** across **3,774** standardized cyber intelligence vectors (MITRE ATT&CK, CISA KEV, NVD, and OWASP Top 10).")
+
+    rag_view = st.radio("Select View:", [
+        "🔎 Semantic Threat Intelligence Search",
+        "⚡ Autonomous Incident Investigation Simulator"
+    ], horizontal=True)
+
+    if rag_view == "🔎 Semantic Threat Intelligence Search":
+        st.subheader("1. Semantic Vector Search across Authoritative Feeds")
+        s_col1, s_col2, s_col3 = st.columns([2, 1, 1])
+        with s_col1:
+            q = st.text_input("Enter Cybersecurity Query or Technique:", value="SQL injection bypass in web authentication")
+        with s_col2:
+            feed_filter = st.selectbox("Filter Knowledge Feed:", ["All Sources", "mitre_attack", "cisa_kev", "owasp_top10", "nvd"])
+        with s_col3:
+            cat_filter = st.selectbox("Filter Attack Family:", ["All Classes", "Infiltration", "Web Exploitation", "DDoS", "DoS", "Botnet", "Brute Force", "PortScan", "Fuzzing"])
+
+        src_arg = None if feed_filter == "All Sources" else feed_filter
+        cat_arg = None if cat_filter == "All Classes" else cat_filter
+
+        if st.button("🔎 Search Vector Database", type="primary", use_container_width=True):
+            with st.spinner("Searching 3,774 ChromaDB vectors..."):
+                hits = retriever.search(q, n_results=6, source=src_arg, category=cat_arg)
+
+            if hits:
+                st.success(f"Retrieved {len(hits)} matching threat intelligence documents:")
+                for idx, hit in enumerate(hits, 1):
+                    sev = hit.get("severity", "MEDIUM")
+                    sev_badge = "🔴 CRITICAL" if sev == "CRITICAL" else ("🟠 HIGH" if sev == "HIGH" else "🟡 MEDIUM")
+                    with st.expander(f"#{idx} | [{hit.get('source').upper()}] {hit.get('identifier')}: {hit.get('title')} — Relevance: {hit.get('score'):.4f} ({sev_badge})", expanded=(idx <= 2)):
+                        st.markdown(f"**Knowledge Source:** `{hit.get('source')}` | **Attack Class:** `{hit.get('category')}` | **Identifier:** `{hit.get('identifier')}` | **Severity:** `{hit.get('severity')}`")
+                        st.markdown("---")
+                        st.markdown(hit.get("text"))
+            else:
+                st.warning("No matching threat intelligence documents found.")
+
+    else:
+        st.subheader("2. Autonomous Incident Investigation Simulator")
+        st.write("Simulate an incoming network intrusion alert to evaluate the automated triage, immediate containment policy, and playbook synthesis.")
+
+        sim_c1, sim_c2, sim_c3 = st.columns(3)
+        with sim_c1:
+            sim_family = st.selectbox("Detected Attack Family:", ["Infiltration", "Web Exploitation", "DDoS", "DoS", "Botnet", "Brute Force", "PortScan", "Fuzzing"])
+            sim_conf = st.slider("Attribution Certainty:", 0.50, 1.00, 0.98, 0.01)
+        with sim_c2:
+            sim_port = st.number_input("Target Service Port:", value=445)
+            sim_src = st.text_input("Source IP Address:", value="192.168.10.45")
+        with sim_c3:
+            sim_dst = st.text_input("Destination IP Address:", value="10.0.0.5")
+            sim_feat = st.text_input("Top Decisive Feature (SHAP):", value="traffic_symmetry_ratio (+2.14)")
+
+        if st.button("⚡ Generate Autonomous Incident Brief & Playbook", type="primary", use_container_width=True):
+            with st.spinner("Executing autonomous SOC reasoning workflow..."):
+                sim_report = workflow.investigate_alert(
+                    attack_family=sim_family,
+                    confidence=sim_conf,
+                    src_ip=sim_src,
+                    dst_ip=sim_dst,
+                    dst_port=sim_port,
+                    decisive_features=[sim_feat],
+                    llm_provider=selected_llm_provider,
+                    llm_model=selected_llm_model,
+                    api_key=selected_api_key
+                )
+                from intelligence.agent.report_generator import IncidentReportGenerator
+                rep_gen = IncidentReportGenerator()
+                md_brief = rep_gen.generate_markdown(sim_report)
+
+            st.markdown(md_brief)
+
+
+# TAB 4: Global Model Intelligence & Benchmarks
 with tab_global:
     st.header("📈 Global Model Intelligence & Benchmark Analytics")
     st.write("Visual explanations generated from the 436,541-flow stratified evaluation dataset.")

@@ -5,9 +5,12 @@ FastAPI application serving line-rate multi-tier AI inference,
 threat attribution, and live WebSocket security telemetry.
 """
 
+import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+
 from backend.app.api.endpoints import router as api_router
 from backend.app.services.inference_engine import SentinelInferenceEngine
 
@@ -43,16 +46,12 @@ app.add_middleware(
 # Mount API routes
 app.include_router(api_router, prefix="/api")
 
+# Mount Modern Web Frontend directly at root
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
 
-@app.get("/", tags=["Root"])
-def root():
-    return {
-        "platform": "SentinelAI Autonomous Cyber Defense",
-        "version": "1.0.0",
-        "status": "OPERATIONAL",
-        "docs_url": "/docs",
-        "redoc_url": "/redoc"
-    }
+if os.path.exists(FRONTEND_DIR):
+    app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
 
 
 if __name__ == "__main__":

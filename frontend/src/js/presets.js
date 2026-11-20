@@ -1,0 +1,192 @@
+/**
+ * SentinelAI - Inbound Network Flow Telemetry Presets
+ * Exact canonical signatures extracted from CIC-IDS2017, CSE-CIC-IDS2018, and UNSW-NB15.
+ */
+
+export const FLOW_PRESETS = {
+  "infiltration_smb": {
+    id: "infiltration_smb",
+    name: "Stealth Infiltration (SMB Lateral Copy)",
+    badge: "CRITICAL",
+    color: "#ef4444",
+    icon: "🕳️",
+    description: "Post-exploitation lateral movement exploiting internal SMB/RPC shares on port 445.",
+    data: {
+      src_ip: "192.168.10.50",
+      dst_ip: "10.0.0.12",
+      src_port: 49210,
+      protocol: "TCP",
+      dst_port: 445,
+      flow_duration_s: 1.542,
+      flow_iat_mean_s: 0.045,
+      fwd_iat_mean_s: 0.038,
+      bwd_iat_mean_s: 0.052,
+      fwd_packets: 48,
+      bwd_packets: 12,
+      fwd_bytes: 42100,
+      bwd_bytes: 1840,
+      fwd_pkt_len_mean: 877.0,
+      bwd_pkt_len_mean: 153.3,
+      flow_bytes_per_sec: 28495.0,
+      flow_pkts_per_sec: 38.9,
+      fwd_tcp_win_ratio: 0.12,
+      bwd_tcp_win_ratio: 0.85,
+      traffic_symmetry_ratio: 0.958
+    }
+  },
+
+  "web_sqli": {
+    id: "web_sqli",
+    name: "Web Exploitation (SQL Injection / OWASP A05)",
+    badge: "HIGH",
+    color: "#f59e0b",
+    icon: "💉",
+    description: "Application-layer unverified parameter tampering targeting web database backend.",
+    data: {
+      src_ip: "198.51.100.44",
+      dst_ip: "172.16.0.5",
+      src_port: 54122,
+      protocol: "TCP",
+      dst_port: 80,
+      flow_duration_s: 0.892,
+      flow_iat_mean_s: 0.063,
+      fwd_iat_mean_s: 0.051,
+      bwd_iat_mean_s: 0.078,
+      fwd_packets: 14,
+      bwd_packets: 18,
+      fwd_bytes: 3850,
+      bwd_bytes: 14200,
+      fwd_pkt_len_mean: 275.0,
+      bwd_pkt_len_mean: 788.8,
+      flow_bytes_per_sec: 20235.0,
+      flow_pkts_per_sec: 35.8,
+      fwd_tcp_win_ratio: 0.65,
+      bwd_tcp_win_ratio: 0.50,
+      traffic_symmetry_ratio: 0.213
+    }
+  },
+
+  "ddos_udp": {
+    id: "ddos_udp",
+    name: "Volumetric DDoS (UDP/SYN Flood)",
+    badge: "CRITICAL",
+    color: "#ef4444",
+    icon: "🌊",
+    description: "Saturating line-rate burst designed to overwhelm state tables and socket buffers.",
+    data: {
+      src_ip: "203.0.113.88",
+      dst_ip: "10.0.0.1",
+      src_port: 60233,
+      protocol: "UDP",
+      dst_port: 80,
+      flow_duration_s: 0.025,
+      flow_iat_mean_s: 0.0001,
+      fwd_iat_mean_s: 0.0001,
+      bwd_iat_mean_s: 0.0,
+      fwd_packets: 450,
+      bwd_packets: 0,
+      fwd_bytes: 234000,
+      bwd_bytes: 0,
+      fwd_pkt_len_mean: 520.0,
+      bwd_pkt_len_mean: 0.0,
+      flow_bytes_per_sec: 9360000.0,
+      flow_pkts_per_sec: 18000.0,
+      fwd_tcp_win_ratio: 0.0,
+      bwd_tcp_win_ratio: 0.0,
+      traffic_symmetry_ratio: 1.000
+    }
+  },
+
+  "botnet_c2": {
+    id: "botnet_c2",
+    name: "Botnet C2 Beaconing (Ares Cluster)",
+    badge: "CRITICAL",
+    color: "#ef4444",
+    icon: "🤖",
+    description: "Periodic structured heartbeat beaconing to remote adversary C2 cluster on port 8080.",
+    data: {
+      src_ip: "192.168.1.105",
+      dst_ip: "185.220.101.5",
+      src_port: 48992,
+      protocol: "TCP",
+      dst_port: 8080,
+      flow_duration_s: 4.821,
+      flow_iat_mean_s: 0.688,
+      fwd_iat_mean_s: 0.695,
+      bwd_iat_mean_s: 0.710,
+      fwd_packets: 8,
+      bwd_packets: 7,
+      fwd_bytes: 640,
+      bwd_bytes: 580,
+      fwd_pkt_len_mean: 80.0,
+      bwd_pkt_len_mean: 82.8,
+      flow_bytes_per_sec: 253.0,
+      flow_pkts_per_sec: 3.1,
+      fwd_tcp_win_ratio: 0.45,
+      bwd_tcp_win_ratio: 0.45,
+      traffic_symmetry_ratio: 0.524
+    }
+  },
+
+  "bruteforce_ssh": {
+    id: "bruteforce_ssh",
+    name: "SSH Dictionary Assault (Brute Force)",
+    badge: "HIGH",
+    color: "#f59e0b",
+    icon: "🔑",
+    description: "Rapid sequential credential harvesting against encrypted SSH port 22.",
+    data: {
+      src_ip: "192.168.1.200",
+      dst_ip: "10.0.0.15",
+      src_port: 52190,
+      protocol: "TCP",
+      dst_port: 22,
+      flow_duration_s: 0.312,
+      flow_iat_mean_s: 0.015,
+      fwd_iat_mean_s: 0.012,
+      bwd_iat_mean_s: 0.018,
+      fwd_packets: 22,
+      bwd_packets: 18,
+      fwd_bytes: 2840,
+      bwd_bytes: 2600,
+      fwd_pkt_len_mean: 129.0,
+      bwd_pkt_len_mean: 144.4,
+      flow_bytes_per_sec: 17435.0,
+      flow_pkts_per_sec: 128.2,
+      fwd_tcp_win_ratio: 0.75,
+      bwd_tcp_win_ratio: 0.68,
+      traffic_symmetry_ratio: 0.522
+    }
+  },
+
+  "normal_https": {
+    id: "normal_https",
+    name: "Legitimate HTTPS Session (CDN / Benign)",
+    badge: "NORMAL",
+    color: "#10b981",
+    icon: "🟢",
+    description: "Standard web browsing TLS flow demonstrating balanced bidirectional symmetry.",
+    data: {
+      src_ip: "192.168.1.25",
+      dst_ip: "104.16.12.34",
+      src_port: 51834,
+      protocol: "TCP",
+      dst_port: 443,
+      flow_duration_s: 2.140,
+      flow_iat_mean_s: 0.089,
+      fwd_iat_mean_s: 0.082,
+      bwd_iat_mean_s: 0.095,
+      fwd_packets: 26,
+      bwd_packets: 32,
+      fwd_bytes: 3200,
+      bwd_bytes: 24500,
+      fwd_pkt_len_mean: 123.0,
+      bwd_pkt_len_mean: 765.6,
+      flow_bytes_per_sec: 12943.0,
+      flow_pkts_per_sec: 27.1,
+      fwd_tcp_win_ratio: 0.85,
+      bwd_tcp_win_ratio: 0.85,
+      traffic_symmetry_ratio: 0.115
+    }
+  }
+};
