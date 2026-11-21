@@ -12,6 +12,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from backend.app.api.endpoints import router as api_router
+from backend.app.proxy.gateway import router as proxy_router
+from backend.app.api.monitoring import router as monitoring_router
 from backend.app.services.inference_engine import SentinelInferenceEngine
 
 
@@ -43,7 +45,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mount API routes
+# Mount Reverse Proxy Gateway for 24/7 protected target website (e.g. Aa-ji-honey)
+app.include_router(proxy_router)
+
+# Mount 24/7 Monitoring & Telemetry APIs
+app.include_router(monitoring_router, prefix="/api/monitoring")
+
+# Mount Core API routes
 app.include_router(api_router, prefix="/api")
 
 # Mount Modern Web Frontend directly at root

@@ -65,6 +65,9 @@
         <button class="tab-btn active" data-tab="tab-flow-inspector">
           <span>🔍</span> Flow Inspector & XAI
         </button>
+        <button class="tab-btn" data-tab="tab-live-monitor">
+          <span>🌐</span> 24/7 Website Shield
+        </button>
         <button class="tab-btn" data-tab="tab-batch-stream">
           <span>⚡</span> Batch Stream (Stress Test)
         </button>
@@ -327,6 +330,145 @@
           </div>
         </div>
 
+      </div>
+    </section>
+
+    <!-- =========================================================================
+         TAB: 24/7 LIVE WEBSITE SHIELD & REVERSE PROXY MONITOR
+         ========================================================================= -->
+    <section id="tab-live-monitor" class="tab-panel">
+      <!-- Target Configuration & Actions Card -->
+      <div class="soc-card" style="margin-bottom: 1.25rem;">
+        <div class="soc-card-header">
+          <div>
+            <div class="soc-card-title">
+              <span>🌐</span> 24/7 Website Inline Shield & Reverse Proxy Gateway
+            </div>
+            <div class="soc-card-subtitle">
+              Continuous live inline protection for production websites. Evaluates incoming HTTP traffic against the 3-Tier AI engine, drops attacks, and logs events with millisecond timestamps.
+            </div>
+          </div>
+          <div id="monitor-shield-status-badge" class="system-status">
+            <span class="pulse-dot"></span> PROTECTING: https://aai-ji-honey.vercel.app
+          </div>
+        </div>
+
+        <!-- Target Controller Grid -->
+        <div style="display: grid; grid-template-columns: 2fr 1fr auto; gap: 0.75rem; align-items: end; margin-bottom: 1rem;">
+          <div class="form-group" style="margin: 0;">
+            <label class="form-label">Protected Upstream Website URL</label>
+            <input type="text" id="monitor-target-url-input" class="form-control" value="https://aai-ji-honey.vercel.app" placeholder="https://your-website.com" />
+          </div>
+          <div class="form-group" style="margin: 0;">
+            <label class="form-label">Local Protected Gateway</label>
+            <input type="text" id="monitor-gateway-url-input" class="form-control" readonly value="/gateway/" style="color: var(--accent-cyan); font-family: var(--font-mono);" />
+          </div>
+          <div style="display: flex; gap: 0.5rem;">
+            <button class="btn-cyber btn-cyber-primary" id="btn-save-target-url" style="white-space: nowrap;">
+              Save Target
+            </button>
+            <a href="/gateway/" id="monitor-gateway-link" target="_blank" class="btn-cyber" style="white-space: nowrap; text-decoration: none;">
+              Open Gateway ↗
+            </a>
+          </div>
+        </div>
+
+        <!-- Action Control Buttons -->
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border-subtle);">
+          <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+            <button class="btn-cyber" id="btn-toggle-heartbeat">
+              ▶️ Start 24/7 Heartbeat
+            </button>
+            <button class="btn-cyber" id="btn-test-clean-traffic" style="color: #6ee7b7; border-color: rgba(16, 185, 129, 0.4);">
+              ✅ Test Clean Visit
+            </button>
+            <button class="btn-cyber" id="btn-test-attack-block" style="color: #fca5a5; border-color: rgba(239, 68, 68, 0.4);">
+              🚨 Test Attack Block (SQLi)
+            </button>
+          </div>
+          <div>
+            <button class="btn-cyber" id="btn-clear-traffic-logs" style="font-size: 0.75rem; color: var(--text-muted);">
+              🗑️ Clear Logs
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Rolling Metrics Ribbon -->
+      <div class="telemetry-strip" style="margin-bottom: 1.25rem;">
+        <div class="telemetry-item">
+          <span class="telemetry-label">Monitored Requests:</span>
+          <span class="telemetry-value" id="stat-mon-total">0</span>
+        </div>
+        <div class="telemetry-sep"></div>
+        <div class="telemetry-item">
+          <span class="telemetry-label">Clean Allowed (200 OK):</span>
+          <span class="telemetry-value" id="stat-mon-clean" style="color: var(--accent-green);">0</span>
+        </div>
+        <div class="telemetry-sep"></div>
+        <div class="telemetry-item">
+          <span class="telemetry-label">Threats Blocked (403):</span>
+          <span class="telemetry-value" id="stat-mon-blocked" style="color: var(--accent-red);">0</span>
+        </div>
+        <div class="telemetry-sep"></div>
+        <div class="telemetry-item">
+          <span class="telemetry-label">Upstream Latency:</span>
+          <span class="telemetry-value" id="stat-mon-latency" style="color: var(--accent-cyan);">0 ms</span>
+        </div>
+        <div class="telemetry-sep"></div>
+        <div class="telemetry-item">
+          <span class="telemetry-label">Shield Integrity:</span>
+          <span class="telemetry-value" id="stat-mon-health" style="color: #c084fc;">100%</span>
+        </div>
+      </div>
+
+      <!-- Real-Time Rolling Timeline Chart -->
+      <div class="soc-card" style="margin-bottom: 1.25rem;">
+        <div class="soc-card-header">
+          <div class="soc-card-title">
+            <span>📈</span> Real-Time Traffic Timeline (Live Rolling Stream)
+          </div>
+          <div style="display: flex; align-items: center; gap: 1.25rem; font-size: 0.75rem;">
+            <span style="display: flex; align-items: center; gap: 0.4rem;">
+              <span style="width: 10px; height: 10px; background: #10b981; border-radius: 2px;"></span> Clean Requests
+            </span>
+            <span style="display: flex; align-items: center; gap: 0.4rem;">
+              <span style="width: 10px; height: 10px; background: #ef4444; border-radius: 2px;"></span> Blocked Intrusions
+            </span>
+          </div>
+        </div>
+        <div style="width: 100%; height: 200px; position: relative;">
+          <canvas id="live-traffic-canvas" style="width: 100%; height: 200px; display: block;"></canvas>
+        </div>
+      </div>
+
+      <!-- Live Streamed Request Feed Table -->
+      <div class="soc-card">
+        <div class="soc-card-header">
+          <div class="soc-card-title">
+            <span>🚨</span> Real-Time Monitored Traffic Feed (Persistent Time-Series)
+          </div>
+          <div class="soc-card-subtitle">
+            Every connection hitting the protected gateway is logged below with millisecond precision
+          </div>
+        </div>
+
+        <table class="alert-feed-table">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Client IP</th>
+              <th>Method</th>
+              <th>Target Path</th>
+              <th>HTTP Status</th>
+              <th>Security Verdict</th>
+              <th style="text-align: right;">Latency</th>
+            </tr>
+          </thead>
+          <tbody id="monitor-logs-tbody">
+            <!-- Dynamically populated -->
+          </tbody>
+        </table>
       </div>
     </section>
 

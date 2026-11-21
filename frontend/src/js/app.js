@@ -8,6 +8,7 @@ import { FlowInspector } from "./flow_inspector.js";
 import { BatchStreamSimulator } from "./batch_stream.js";
 import { ThreatIntelController } from "./threat_intel.js";
 import { LiveAlertsController } from "./live_alerts.js";
+import { LiveMonitorController } from "./live_monitor.js";
 
 class AppState {
   constructor() {
@@ -91,6 +92,7 @@ class SentinelApp {
     this.batchSimulator = new BatchStreamSimulator();
     this.threatIntel = new ThreatIntelController(this.state);
     this.liveAlerts = new LiveAlertsController();
+    this.liveMonitor = new LiveMonitorController();
   }
 
   async checkHealth() {

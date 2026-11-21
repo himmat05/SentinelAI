@@ -28,6 +28,7 @@ intelligence/data/processed/
 # Temporary & Scratch Files
 *.log
 backend/data/
+data/*.db*
 cell11_matches.txt
 clean_unsw_search.txt
 
