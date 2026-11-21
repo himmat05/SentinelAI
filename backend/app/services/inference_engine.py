@@ -136,6 +136,10 @@ class SentinelInferenceEngine:
             X[i] = self.preprocess_flow(f)[0]
         return X
 
+    def predict(self, flow: FlowData) -> PredictionResponse:
+        """Alias for inspect_flow for seamless backwards compatibility."""
+        return self.inspect_flow(flow)
+
     def inspect_flow(self, flow: FlowData) -> PredictionResponse:
         """
         High-speed single flow inspection pipeline with Knob 1 Multi-Tier Synergy.
