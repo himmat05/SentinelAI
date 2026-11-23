@@ -13,6 +13,7 @@ from pydantic import BaseModel
 
 from backend.app.db.traffic_store import traffic_store
 from backend.app.proxy.gateway import _proxy_config, set_target_url, get_target_url
+from backend.app.proxy.flow_tracker import quarantine_manager
 
 
 router = APIRouter()
@@ -110,30 +111,80 @@ async def get_recent_traffic_logs(limit: int = 50, threat_only: bool = False) ->
     }
 
 
+class UnbanRequest(BaseModel):
+    client_ip: str
+
+
+@router.get("/quarantine")
+async def get_active_quarantine_bans() -> Dict[str, Any]:
+    """Return all currently quarantined client IPs in the active defense jail."""
+    bans = quarantine_manager.get_all_active_bans()
+    return {
+        "quarantined_ips": bans,
+        "count": len(bans)
+    }
+
+
+@router.post("/quarantine/unban")
+async def release_quarantined_ip(req: UnbanRequest) -> Dict[str, Any]:
+    """Release an IP from the quarantine jail."""
+    success = quarantine_manager.unban_ip(req.client_ip)
+    return {
+        "client_ip": req.client_ip,
+        "unbanned": success,
+        "message": f"IP {req.client_ip} released from quarantine" if success else f"IP {req.client_ip} was not quarantined"
+    }
+
+
 @router.post("/simulate-attack")
 async def simulate_attack_on_gateway(attack_type: str = "sqli") -> Dict[str, Any]:
     """
     Test Trigger:
     Fires an adversarial request against http://127.0.0.1:8000/gateway/
-    to test the live AI shield and demonstrate immediate 403 containment.
+    to test the live AI shield, OWASP inspection, and immediate active IP quarantine.
     """
-    payloads = {
-        "sqli": "/gateway/api/products?id=1%27%20OR%20%271%27=%271%27%20UNION%20SELECT%20username,password%20FROM%20users--",
-        "traversal": "/gateway/static/../../etc/passwd",
-        "xss": "/gateway/search?q=%3Cscript%3Ealert(%27pwned%27)%3C/script%3E"
-    }
-    target_path = payloads.get(attack_type, payloads["sqli"])
+    headers = {}
+    if attack_type == "scanner":
+        target_path = "/gateway/api/products"
+        headers["user-agent"] = "sqlmap/1.7#stable (http://sqlmap.org)"
+    elif attack_type == "sensitive_probe":
+        target_path = "/gateway/.env"
+    elif attack_type == "rce":
+        target_path = "/gateway/api/system?cmd=%3Bcat%20/etc/passwd"
+    elif attack_type == "traversal":
+        target_path = "/gateway/static/../../etc/passwd"
+    elif attack_type == "xss":
+        target_path = "/gateway/search?q=%3Cscript%3Ealert(%27pwned%27)%3C/script%3E"
+    elif attack_type == "flood":
+        target_path = "/gateway/api/ping"
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            for _ in range(28):
+                try:
+                    await client.get(f"http://127.0.0.1:8000{target_path}")
+                except Exception:
+                    pass
+            res = await client.get(f"http://127.0.0.1:8000{target_path}")
+        return {
+            "simulated_attack": "flood",
+            "sent_url": f"http://127.0.0.1:8000{target_path}",
+            "response_status": res.status_code,
+            "blocked": res.status_code == 403,
+            "message": "Volumetric Flood detected and throttled!" if res.status_code == 403 else "Flood burst transmitted"
+        }
+    else:  # sqli
+        target_path = "/gateway/api/products?id=1%27%20OR%20%271%27=%271%27%20UNION%20SELECT%20username,password%20FROM%20users--"
+
     url = f"http://127.0.0.1:8000{target_path}"
 
     async with httpx.AsyncClient(timeout=5.0) as client:
-        res = await client.get(url)
+        res = await client.get(url, headers=headers)
 
     return {
         "simulated_attack": attack_type,
         "sent_url": url,
         "response_status": res.status_code,
         "blocked": res.status_code == 403,
-        "message": "Attack intercepted and blocked by SentinelAI Shield!" if res.status_code == 403 else "Response received"
+        "message": "Attack intercepted, blocked & IP quarantined by SentinelAI Shield!" if res.status_code == 403 else "Response received"
     }
 
 

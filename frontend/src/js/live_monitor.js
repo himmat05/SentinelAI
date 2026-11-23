@@ -39,10 +39,24 @@ export class LiveMonitorController {
       btnClean.addEventListener("click", () => this.testCleanTraffic());
     }
 
-    // Simulate Attack Block
-    const btnAttack = document.getElementById("btn-test-attack-block");
-    if (btnAttack) {
-      btnAttack.addEventListener("click", () => this.simulateAttack());
+    // Multi-Vector Attack Simulators
+    document.querySelectorAll(".btn-sim-attack").forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        const type = e.currentTarget.dataset.type || "sqli";
+        this.simulateAttack(type, e.currentTarget);
+      });
+    });
+
+    // Event Delegation for Quarantine Jail Unban Actions
+    const qTbody = document.getElementById("monitor-quarantine-tbody");
+    if (qTbody) {
+      qTbody.addEventListener("click", (e) => {
+        const btn = e.target.closest(".btn-unban-ip");
+        if (btn) {
+          const ip = btn.dataset.ip;
+          this.unbanIp(ip);
+        }
+      });
     }
 
     // Clear Logs
@@ -147,22 +161,41 @@ export class LiveMonitorController {
     }
   }
 
-  async simulateAttack() {
-    const btn = document.getElementById("btn-test-attack-block");
-    const old = btn.innerHTML;
-    btn.innerHTML = `<span class="pulse-dot"></span> Firing Exploit...`;
-    btn.disabled = true;
+  async simulateAttack(attackType = "sqli", triggerBtn = null) {
+    const old = triggerBtn ? triggerBtn.innerHTML : null;
+    if (triggerBtn) {
+      triggerBtn.innerHTML = `<span class="pulse-dot"></span> In flight...`;
+      triggerBtn.disabled = true;
+    }
 
     try {
-      const res = await fetch("/api/monitoring/simulate-attack?attack_type=sqli", { method: "POST" });
+      const res = await fetch(`/api/monitoring/simulate-attack?attack_type=${encodeURIComponent(attackType)}`, { method: "POST" });
       const data = await res.json();
-      this.refreshData();
-      alert(`🛡️ Attack Intercepted!\nStatus: HTTP ${data.response_status} FORBIDDEN\n${data.message}`);
+      await this.refreshData();
+      alert(`🛡️ Intrusion Intercepted!\nAttack Vector: [${attackType.toUpperCase()}]\nStatus: HTTP ${data.response_status} FORBIDDEN\n${data.message}`);
     } catch (err) {
       alert(`Simulation error: ${err.message}`);
     } finally {
-      btn.innerHTML = old;
-      btn.disabled = false;
+      if (triggerBtn) {
+        triggerBtn.innerHTML = old;
+        triggerBtn.disabled = false;
+      }
+    }
+  }
+
+  async unbanIp(ip) {
+    if (!ip) return;
+    try {
+      const res = await fetch("/api/monitoring/quarantine/unban", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ client_ip: ip })
+      });
+      const data = await res.json();
+      await this.refreshData();
+      alert(`🔓 IP Released!\n${data.message}`);
+    } catch (err) {
+      alert(`Failed to unban IP: ${err.message}`);
     }
   }
 
@@ -198,9 +231,56 @@ export class LiveMonitorController {
         const l = await logsRes.json();
         this.renderLogsTable(l.logs || []);
       }
+
+      // 4. Fetch Active Quarantine Jail
+      const qRes = await fetch("/api/monitoring/quarantine");
+      if (qRes.ok) {
+        const q = await qRes.json();
+        this.renderQuarantineTable(q.quarantined_ips || []);
+      }
     } catch (err) {
       // Background poll failure (quiet)
     }
+  }
+
+  renderQuarantineTable(bans) {
+    const tbody = document.getElementById("monitor-quarantine-tbody");
+    const badge = document.getElementById("quarantine-count-badge");
+    if (badge) {
+      badge.textContent = `${bans.length} QUARANTINED ${bans.length === 1 ? 'IP' : 'IPS'}`;
+      badge.style.color = bans.length > 0 ? "var(--accent-red)" : "#fbbf24";
+      badge.style.borderColor = bans.length > 0 ? "rgba(239, 68, 68, 0.4)" : "rgba(245, 158, 11, 0.4)";
+    }
+    if (!tbody) return;
+
+    if (bans.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 1.25rem;">No IP sockets currently quarantined. Perimeter clear.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = bans.map(b => {
+      const remainingMin = Math.ceil(b.remaining_seconds / 60);
+      return `
+        <tr>
+          <td><span style="font-family: var(--font-mono); font-weight: 700; color: #f87171;">${b.client_ip}</span></td>
+          <td><span class="tier-badge alert">${b.threat_category}</span></td>
+          <td style="font-size: 0.8rem; color: var(--text-muted); max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+            ${b.reason}
+          </td>
+          <td style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted);">${b.banned_at || '--'}</td>
+          <td>
+            <span style="font-family: var(--font-mono); font-size: 0.8rem; font-weight: bold; color: #fbbf24;">
+              ⏳ ${b.remaining_seconds}s (~${remainingMin}m)
+            </span>
+          </td>
+          <td style="text-align: right;">
+            <button class="btn-cyber btn-unban-ip" data-ip="${b.client_ip}" style="font-size: 0.72rem; padding: 0.25rem 0.65rem; color: #6ee7b7; border-color: rgba(16, 185, 129, 0.4);">
+              🔓 Unban IP
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join("");
   }
 
   updateStatsUI(s) {
