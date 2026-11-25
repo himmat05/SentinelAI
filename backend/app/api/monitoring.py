@@ -395,7 +395,7 @@ async def simulate_attack_on_gateway(
         transport = httpx.ASGITransport(app=request.app)
         async with httpx.AsyncClient(transport=transport, base_url="http://sentinel.local", timeout=10.0) as client:
             res = None
-            for _ in range(32):
+            for _ in range(50):
                 res = await client.get(target_path, headers=headers)
         status_code = res.status_code if res else 500
         return {

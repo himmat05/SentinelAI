@@ -350,7 +350,8 @@ async def proxy_gateway(request: Request, path: str = ""):
         engine = SentinelInferenceEngine.get_instance()
         pred = engine.inspect_flow(flow_data)
 
-        # Consensus Decision (WAF Signatures + Volumetric Flood/Scan + Behavioral ML)
+        # Consensus Decision (L7 WAF Signatures + Volumetric Rate/Scan + Supervised Tier-2 Confirmation)
+        # Note: Unsupervised L4 IsolationForest outliers alone do NOT trigger HTTP 403/IP bans in L7 reverse proxy mode
         is_threat = False
         cat = "Normal (Clean)"
         threat_reason = ""
@@ -363,10 +364,10 @@ async def proxy_gateway(request: Request, path: str = ""):
             is_threat = True
             cat = "DDoS"
             threat_reason = heuristics.get("threat_reason", "Volumetric request flooding rate-limit exceeded.")
-        elif pred.is_threat and pred.threat_category != "Normal (Clean)":
+        elif pred.tier2_flag and pred.tier2_score >= 0.85 and pred.threat_category != "Normal (Clean)":
             is_threat = True
             cat = pred.threat_category
-            threat_reason = f"Anomalous {cat} flow dynamics flagged by 3-Tier AI Model."
+            threat_reason = f"High-confidence {cat} flow flagged by Supervised Gatekeeper (P={pred.tier2_score:.2f})."
 
         # Allowlisted IPs are never blocked/quarantined
         shadow_alert_header: Optional[str] = None

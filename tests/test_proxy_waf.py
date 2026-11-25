@@ -169,6 +169,34 @@ class TestProxyAndWaf(unittest.TestCase):
         is_banned, _ = ft_module.quarantine_manager.is_quarantined(trusted_ip)
         self.assertFalse(is_banned)
 
+    def test_real_spa_polling_and_review_text_never_falsely_jailed(self):
+        shopper_ip = "157.48.231.82"
+        big_headers = {
+            "x-forwarded-for": shopper_ip,
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+            "authorization": "Bearer " + ("x" * 350),
+            "cookie": "session=" + ("y" * 500),
+        }
+        # First burst of page load API calls
+        for p in ["/gateway/api/cart", "/gateway/messages/unread-count", "/gateway/reviews", "/gateway/gallery"]:
+            res = self.client.get(p, headers=big_headers)
+            self.assertEqual(res.status_code, 200)
+
+        # Simulate 9-second user pause before polling /products (regression test for Render false positive!)
+        ft_module.flow_tracker.ip_history[shopper_ip][-1] -= 9.0
+        res_products = self.client.get("/gateway/products", headers=big_headers)
+        self.assertEqual(res_products.status_code, 200)
+
+        # Simulate normal natural-language review containing words like "select ... from" or "--"
+        res_review = self.client.post(
+            "/gateway/reviews",
+            json={"rating": 5, "comment": "Select pure organic honey from wild forests -- great quality!"},
+            headers=big_headers,
+        )
+        self.assertEqual(res_review.status_code, 200)
+        is_banned, _ = ft_module.quarantine_manager.is_quarantined(shopper_ip)
+        self.assertFalse(is_banned)
+
 
 if __name__ == "__main__":
     unittest.main()

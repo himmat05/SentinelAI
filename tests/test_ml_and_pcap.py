@@ -152,7 +152,9 @@ class TestMlPcapAndRag(unittest.TestCase):
                 tier2_score=0.99,
                 details="SQL Injection attempt detected",
             )
-            res = self.client.post(f"/api/monitoring/investigate-event/{logged['id']}")
+            token = os.environ.get("SENTINEL_ADMIN_TOKEN", "").strip()
+            headers = {"X-Sentinel-Token": token} if token else {}
+            res = self.client.post(f"/api/monitoring/investigate-event/{logged['id']}", headers=headers)
             self.assertEqual(res.status_code, 200)
             body = res.json()
             self.assertEqual(body["threat_family"], "Web Exploitation")

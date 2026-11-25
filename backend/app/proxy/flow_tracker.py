@@ -96,13 +96,14 @@ def extract_inspectable_body(headers: Dict[str, str], body_bytes: bytes) -> str:
 # Comprehensive OWASP & Malicious Practice Inspection Signatures
 # ==============================================================================
 
-# 1. SQL Injection: Union, error-based, blind, tautology, stacked queries
+# 1. SQL Injection: Union, error-based, blind, tautology, stacked queries (tuned to avoid normal English false positives)
 SQLI_PATTERNS = re.compile(
-    r"(\b(UNION(\s+ALL)?\s+SELECT|SELECT\s+.+\s+FROM|INSERT\s+INTO|UPDATE\s+.+\s+SET|"
-    r"DELETE\s+FROM|DROP\s+(TABLE|DATABASE)|ALTER\s+TABLE|EXEC(\s|\+)|DECLARE\s+@|"
-    r"SLEEP\s*\(|BENCHMARK\s*\(|LOAD_FILE\s*\(|INTO\s+OUTFILE|PG_SLEEP\s*\()\b|"
+    r"(\b(UNION(\s+ALL)?\s+SELECT|SELECT\s+(\*|[@\w`,.\s]+)\s+FROM\s+(users|information_schema|sqlite_master|pg_\w+|mysql\.\w+|sys\.\w+|accounts|customers|orders|dual)\b|"
+    r"SELECT\s+.+\s+FROM\s+\w+\s+WHERE\b|INSERT\s+INTO\s+\w+|UPDATE\s+\w+\s+SET\s+\w+\s*=|"
+    r"DELETE\s+FROM\s+\w+|DROP\s+(TABLE|DATABASE)\s+\w+|ALTER\s+TABLE\s+\w+|EXEC(UTE)?\s+(xp_|sp_|@|\()|DECLARE\s+@|"
+    r"SLEEP\s*\(\s*\d|BENCHMARK\s*\(|LOAD_FILE\s*\(|INTO\s+OUTFILE|PG_SLEEP\s*\(\s*\d)\b|"
     r"'\s*(\bOR\b|\bAND\b)\s*['\d\w]+\s*=|'\s*OR\s+1\s*=\s*1|\bOR\b\s+['\d]+=['\d]+|"
-    r";\s*(DROP|DELETE|SELECT|INSERT|UPDATE)\b|--\s|\bWAITFOR\b\s+DELAY)",
+    r";\s*(DROP|DELETE|SELECT|INSERT|UPDATE)\s+\w+|['\";\)]\s*--\s*$|['\";]\s*--\s|\bWAITFOR\b\s+DELAY)",
     re.IGNORECASE,
 )
 
@@ -133,7 +134,7 @@ SENSITIVE_FILES_PATTERN = re.compile(
 RCE_PATTERNS = re.compile(
     r"(;\s*(cat|ls|id|whoami|uname|wget|curl|nc|ncat|bash|sh|python|perl|php)\b|"
     r"\|\s*(cat|ls|id|whoami|uname|wget|curl|nc|bash|sh)\b|"
-    r"\$\(\s*(cat|id|whoami|curl|wget|bash|sh)\b|`[^`]{2,}`|"
+    r"\$\(\s*(cat|id|whoami|curl|wget|bash|sh)\b|`[^`]*\b(cat|ls|id|whoami|uname|curl|wget|bash|sh|nc)\b[^`]*`|"
     r"\b(cmd\.exe|powershell(\.exe)?|/bin/bash|/bin/sh)\b)",
     re.IGNORECASE,
 )
@@ -301,8 +302,8 @@ class ClientFlowTracker:
         has_rce = bool(RCE_PATTERNS.search(full_norm_req))
         has_ssrf_probe = bool(SSRF_PARAM_PATTERN.search(full_norm_req))
         is_scanner = bool(SCANNER_USER_AGENTS.search(user_agent))
-        is_flooding = req_count_in_window > 30 and measured_iat_s < 0.05
-        is_dir_busting = unique_paths_in_window >= 20 and req_count_in_window >= 22
+        is_flooding = req_count_in_window > 45 and measured_iat_s < 0.025
+        is_dir_busting = unique_paths_in_window >= 25 and req_count_in_window >= 28
 
         is_malicious = (
             has_sqli
@@ -389,8 +390,8 @@ class ClientFlowTracker:
             iat_mean_s = min(measured_iat_s, 0.001)
             effective_port = target_port
         else:
-            # Clean HTTP session: blend actual measured fwd payload bytes with HTTPS transport baseline
-            fwd_bytes = float(max(raw_fwd_bytes, 512))
+            # Clean HTTP session: preserve intra-flow TCP baseline physics (never mix multi-second HTTP user pause into packet IAT)
+            fwd_bytes = float(min(max(raw_fwd_bytes, 512), 2400))
             bwd_bytes = 14200.0
             fwd_packets = max(est_fwd_pkts, 12)
             bwd_packets = 16
@@ -402,7 +403,7 @@ class ClientFlowTracker:
             fwd_tcp_win = 0.55
             bwd_tcp_win = 0.60
             symmetry_ratio = round(fwd_bytes / (fwd_bytes + bwd_bytes), 3)
-            iat_mean_s = max(measured_iat_s, 0.065)
+            iat_mean_s = min(max(measured_iat_s, 0.045), 0.120)
             effective_port = target_port
 
         flow_data = FlowData(

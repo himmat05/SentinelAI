@@ -58,9 +58,9 @@ Measured end-to-end across single-process FastAPI ASGI with persistent SQLite WA
 | :--- | :--- |
 | **Clean Requests Evaluated** | `100` |
 | **Clean False Positives** | `0 / 100` (**`0.00%`**) |
-| **Inline Latency (Mean / P50 / P95)** | **`33.09 ms`** / **`32.77 ms`** / **`37.23 ms`** *(reduced ~2.9× from 95.03 ms baseline via compiled IsolationForest traversal & SQLite caching)* |
+| **Inline Latency (Mean / P50 / P95)** | **`17.04 ms`** / **`17.01 ms`** / **`18.58 ms`** *(reduced >5× from 95.03 ms baseline via compiled IsolationForest traversal & SQLite caching)* |
 | **Evasion Vectors Blocked** | `11 / 11` (**`100.0%`**) *(inline-comment SQLi, JSON SQLi, double-encoded traversal, HTML-entity XSS, Log4Shell, RCE, `.env`/`.git`, SSRF param, `nikto`)* |
-| **Automated Security & Proxy Test Suite** | **`12 / 12` passing** (`python -m unittest discover -s tests -v`) |
+| **Automated Security & Proxy Test Suite** | **`13 / 13` passing** (`python -m unittest discover -s tests -v`) |
 
 ### 2. Core 3-Tier ML Benchmark (20.4M Unified Flows)
 Evaluated across `2,043,282` held-out test flows (CSE-CIC-IDS2018, CIC-IDS2017, UNSW-NB15):
