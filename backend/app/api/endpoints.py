@@ -10,7 +10,8 @@ import json
 import time
 from typing import List, Set, Optional, Dict
 from collections import deque
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, HTTPException, Query
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, WebSocket, WebSocketDisconnect
+from backend.app.core.security import require_operator_auth
 from backend.app.schemas.flow import (
     FlowData,
     BatchFlowInput,
@@ -259,7 +260,7 @@ async def get_alert_by_id(event_id: str):
 
 
 @router.delete("/alerts", tags=["Alerts"])
-async def clear_alerts():
+async def clear_alerts(_auth: str = Depends(require_operator_auth)):
     """Clear stored alert history."""
     alert_store.clear()
     return {"status": "SUCCESS", "message": "Alert history cleared."}
@@ -317,6 +318,73 @@ async def predict_batch(payload: BatchFlowInput):
             alert_store.add(a)
 
     return batch_resp
+
+
+@router.post("/predict/pcap", tags=["Inference"])
+async def analyze_pcap_capture(file: UploadFile = File(..., description="Classic libpcap (.pcap) network packet capture")):
+    """
+    Reconstruct bidirectional 5-tuple TCP/UDP flows directly from an uploaded .pcap
+    file and run line-rate 3-Tier ML threat inspection across every extracted session.
+    """
+    from network.flow_extraction.pcap_parser import parse_pcap_bytes
+
+    raw_bytes = await file.read()
+    if len(raw_bytes) > 25 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="PCAP file exceeds 25 MB upload limit.")
+
+    try:
+        flows = parse_pcap_bytes(raw_bytes)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+    engine = SentinelInferenceEngine.get_instance()
+    batch_resp = engine.inspect_batch(flows)
+
+    threat_summary: Dict[str, int] = {}
+    flow_reports = []
+    for flow_obj, res in zip(flows, batch_resp.results):
+        if res.is_threat:
+            threat_summary[res.threat_category] = threat_summary.get(res.threat_category, 0) + 1
+            alert = ThreatAlert(
+                event_id=f"PCAP-{int(time.time()*1000)}-{len(flow_reports)}",
+                timestamp=res.timestamp,
+                src_ip=flow_obj.src_ip or "0.0.0.0",
+                dst_ip=flow_obj.dst_ip or "0.0.0.0",
+                dst_port=flow_obj.dst_port,
+                threat_category=res.threat_category,
+                severity="CRITICAL" if res.threat_category in ["DDoS", "Botnet"] else "HIGH",
+                tier2_confidence=res.tier2_score,
+                tier1_anomaly_detected=res.tier1_anomaly_flag,
+                mitigation_action=res.mitigation_action,
+                details=f"PCAP ({file.filename}): {res.threat_category} detected ({res.confidence_pct}%).",
+            )
+            alert_store.add(alert)
+            await alert_manager.broadcast_alert(alert)
+
+        if len(flow_reports) < 100:
+            flow_reports.append({
+                "src_ip": flow_obj.src_ip,
+                "dst_ip": flow_obj.dst_ip,
+                "dst_port": flow_obj.dst_port,
+                "protocol": flow_obj.protocol,
+                "fwd_packets": flow_obj.fwd_packets,
+                "bwd_packets": flow_obj.bwd_packets,
+                "verdict": res.verdict,
+                "threat_category": res.threat_category,
+                "confidence_pct": res.confidence_pct,
+                "mitigation_action": res.mitigation_action,
+            })
+
+    return {
+        "filename": file.filename,
+        "total_flows_extracted": batch_resp.total_flows,
+        "threats_detected": batch_resp.threats_blocked,
+        "clean_flows": batch_resp.clean_allowed,
+        "batch_latency_ms": batch_resp.batch_latency_ms,
+        "throughput_flows_per_sec": batch_resp.throughput_flows_per_sec,
+        "threat_breakdown": threat_summary,
+        "flows": flow_reports,
+    }
 
 
 

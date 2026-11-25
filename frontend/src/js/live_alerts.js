@@ -3,6 +3,7 @@
  */
 
 import { SentinelAPI } from "./api.js";
+import { escapeHtml } from "./security_utils.js";
 
 export class LiveAlertsController {
   constructor() {
@@ -66,13 +67,13 @@ export class LiveAlertsController {
     const countEl = document.getElementById("live-alert-count");
     if (!tableBody) return;
 
-    if (countEl) countEl.textContent = this.alerts.length;
+    if (countEl) countEl.textContent = String(this.alerts.length);
 
     if (this.alerts.length === 0) {
       tableBody.innerHTML = `
         <tr>
           <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">
-            Awaiting live telemetry... Trigger an attack in Flow Inspector or Batch Stream.
+            Awaiting live telemetry... Trigger an attack in Flow Inspector, Batch Stream, or 24/7 Website Shield.
           </td>
         </tr>
       `;
@@ -84,12 +85,12 @@ export class LiveAlertsController {
       const timeStr = a.timestamp ? new Date(a.timestamp).toLocaleTimeString() : new Date().toLocaleTimeString();
       return `
         <tr class="alert-feed-row">
-          <td style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted);">${timeStr}</td>
-          <td><span class="tier-badge ${isCrit ? 'alert' : 'ok'}">${a.severity || 'HIGH'}</span></td>
-          <td><b style="color: var(--accent-red);">${a.threat_category || 'Attack'}</b></td>
-          <td style="font-family: var(--font-mono);">${a.src_ip || 'N/A'}</td>
-          <td style="font-family: var(--font-mono);">${a.dst_ip}:${a.dst_port}</td>
-          <td><code>${a.mitigation_action || 'DROP_PACKETS'}</code></td>
+          <td style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(timeStr)}</td>
+          <td><span class="tier-badge ${isCrit ? 'alert' : 'ok'}">${escapeHtml(a.severity || 'HIGH')}</span></td>
+          <td><b style="color: var(--accent-red);">${escapeHtml(a.threat_category || 'Attack')}</b></td>
+          <td style="font-family: var(--font-mono);">${escapeHtml(a.src_ip || 'N/A')}</td>
+          <td style="font-family: var(--font-mono);">${escapeHtml(a.dst_ip || '0.0.0.0')}:${escapeHtml(a.dst_port ?? '')}</td>
+          <td><code>${escapeHtml(a.mitigation_action || 'DROP_PACKETS')}</code></td>
         </tr>
       `;
     }).join("");

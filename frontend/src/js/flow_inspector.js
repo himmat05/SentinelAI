@@ -6,6 +6,7 @@
 
 import { FLOW_PRESETS } from "./presets.js";
 import { SentinelAPI } from "./api.js";
+import { escapeHtml, showToast } from "./security_utils.js";
 
 export class FlowInspector {
   constructor(appState) {
@@ -140,7 +141,7 @@ export class FlowInspector {
       this.renderResults(result);
     } catch (err) {
       console.error("Inspection error:", err);
-      alert(`Inspection failed: ${err.message}\nMake sure SentinelAI backend is running on port 8000.`);
+      showToast("Inspection Failed", `${err.message}. Check SentinelAI backend status.`, "error");
     } finally {
       btn.innerHTML = originalText;
       btn.disabled = false;
@@ -166,7 +167,7 @@ export class FlowInspector {
           ${isThreat ? '🚨' : '🛡️'}
         </div>
         <div class="verdict-text">
-          <h2>${isThreat ? `BLOCKED — ${cat.toUpperCase()}` : 'ALLOWED — BENIGN SESSION'}</h2>
+          <h2>${isThreat ? `BLOCKED — ${escapeHtml(cat.toUpperCase())}` : 'ALLOWED — BENIGN SESSION'}</h2>
           <p>${isThreat ? `Intrusion intercepted and neutralized by line-rate gatekeeper.` : 'Normal baseline network transport dynamics verified.'}</p>
         </div>
       </div>
@@ -204,10 +205,10 @@ export class FlowInspector {
       <div class="tier-card">
         <div class="tier-name">
           <span>Tier 3: Threat Attribution</span>
-          <span class="tier-badge ${isThreat ? 'alert' : 'ok'}">${res.threat_category}</span>
+          <span class="tier-badge ${isThreat ? 'alert' : 'ok'}">${escapeHtml(res.threat_category)}</span>
         </div>
         <div class="tier-stat">${conf}%</div>
-        <div class="tier-subtext">Action: <code>${res.mitigation_action}</code></div>
+        <div class="tier-subtext">Action: <code>${escapeHtml(res.mitigation_action)}</code></div>
       </div>
     `;
 
@@ -283,7 +284,7 @@ export class FlowInspector {
     if (fallbackBox) {
       if (reasoning.is_fallback) {
         fallbackBox.style.display = "block";
-        fallbackBox.innerHTML = `⚠️ <b>Provider Notice:</b> ${reasoning.fallback_reason || 'Fallback to deterministic rules.'}`;
+        fallbackBox.innerHTML = `⚠️ <b>Provider Notice:</b> ${escapeHtml(reasoning.fallback_reason || 'Fallback to deterministic rules.')}`;
       } else {
         fallbackBox.style.display = "none";
       }
@@ -303,7 +304,7 @@ export class FlowInspector {
       checklistContainer.innerHTML = items.map((item, idx) => `
         <div class="checklist-item">
           <div class="checklist-num">${idx + 1}</div>
-          <div>${item}</div>
+          <div>${escapeHtml(item)}</div>
         </div>
       `).join("");
     }
@@ -316,10 +317,10 @@ export class FlowInspector {
           Enforced Firewall Rule:
         </div>
         <div style="font-size: 1.05rem; font-weight: 800; font-family: var(--font-mono); color: var(--text-primary); margin-bottom: 4px;">
-          ${containment.action || 'LOG_AND_MONITOR'}
+          ${escapeHtml(containment.action || 'LOG_AND_MONITOR')}
         </div>
         <div style="font-size: 0.85rem; color: var(--text-secondary);">
-          ${containment.description || 'Standard monitoring.'}
+          ${escapeHtml(containment.description || 'Standard monitoring.')}
         </div>
       `;
     }
@@ -331,12 +332,12 @@ export class FlowInspector {
         <div class="playbook-card">
           <div class="playbook-header" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none'">
             <div class="playbook-title">
-              <span>📘</span> [${(pb.source || '').toUpperCase()}] ${pb.title}
+              <span>📘</span> [${escapeHtml((pb.source || '').toUpperCase())}] ${escapeHtml(pb.title)}
             </div>
             <span style="font-size: 0.75rem; color: var(--accent-cyan); font-weight: 600;">View Guidance ▾</span>
           </div>
           <div class="playbook-body" style="display: ${idx === 0 ? 'block' : 'none'};">
-            ${pb.guidance}
+            ${escapeHtml(pb.guidance)}
           </div>
         </div>
       `).join("");

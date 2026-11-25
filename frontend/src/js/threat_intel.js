@@ -4,6 +4,7 @@
  */
 
 import { SentinelAPI } from "./api.js";
+import { escapeHtml, showToast } from "./security_utils.js";
 
 export class ThreatIntelController {
   constructor(appState) {
@@ -57,7 +58,7 @@ export class ThreatIntelController {
       this.renderSearchResults(data);
     } catch (err) {
       console.error("Threat search failed:", err);
-      alert(`Search failed: ${err.message}`);
+      showToast("Threat Search Failed", err.message, "error");
     } finally {
       btn.disabled = false;
       btn.innerHTML = `<span>🔎</span> Search Vector Base`;
@@ -86,8 +87,8 @@ export class ThreatIntelController {
         <div class="playbook-card">
           <div class="playbook-header" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none'">
             <div class="playbook-title">
-              <span style="color: ${sevColor}; font-weight: 800;">[${(hit.source || '').toUpperCase()}]</span>
-              <span>${hit.identifier}: ${hit.title}</span>
+              <span style="color: ${sevColor}; font-weight: 800;">[${escapeHtml((hit.source || '').toUpperCase())}]</span>
+              <span>${escapeHtml(hit.identifier)}: ${escapeHtml(hit.title)}</span>
             </div>
             <div style="display: flex; align-items: center; gap: 0.75rem;">
               <span class="tier-badge ok" style="font-family: var(--font-mono);">Match: ${(hit.score || 0).toFixed(4)}</span>
@@ -96,11 +97,11 @@ export class ThreatIntelController {
           </div>
           <div class="playbook-body" style="display: ${idx < 2 ? 'block' : 'none'};">
             <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.5rem;">
-              <b>Knowledge Source:</b> <code>${hit.source}</code> | 
-              <b>Attack Family:</b> <code>${hit.category}</code> | 
-              <b>Severity:</b> <b style="color: ${sevColor};">${sev}</b>
+              <b>Knowledge Source:</b> <code>${escapeHtml(hit.source)}</code> | 
+              <b>Attack Family:</b> <code>${escapeHtml(hit.category)}</code> | 
+              <b>Severity:</b> <b style="color: ${sevColor};">${escapeHtml(sev)}</b>
             </div>
-            <div style="white-space: pre-line;">${hit.text}</div>
+            <div style="white-space: pre-line;">${escapeHtml(hit.text)}</div>
           </div>
         </div>
       `;
@@ -139,7 +140,7 @@ export class ThreatIntelController {
       this.renderSimulationReport(report);
     } catch (err) {
       console.error("Simulation failed:", err);
-      alert(`Simulation failed: ${err.message}`);
+      showToast("Simulation Failed", err.message, "error");
     } finally {
       btn.innerHTML = originalText;
       btn.disabled = false;
@@ -169,7 +170,7 @@ export class ThreatIntelController {
       checklistEl.innerHTML = items.map((c, i) => `
         <div class="checklist-item">
           <div class="checklist-num">${i + 1}</div>
-          <div>${c}</div>
+          <div>${escapeHtml(c)}</div>
         </div>
       `).join("");
     }
@@ -178,7 +179,7 @@ export class ThreatIntelController {
     if (ttpContainer) {
       ttpContainer.innerHTML = attributions.map(a => `
         <li style="margin-bottom: 0.35rem;">
-          <b>${a.identifier}</b>: ${a.title} 
+          <b>${escapeHtml(a.identifier)}</b>: ${escapeHtml(a.title)} 
           <span style="color: var(--text-muted); font-size: 0.75rem;">(Match: ${(a.relevance_score || 0).toFixed(4)})</span>
         </li>
       `).join("");

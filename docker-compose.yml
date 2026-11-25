@@ -1,0 +1,29 @@
+services:
+  sentinelai:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sentinelai-shield
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env.example
+    environment:
+      - SENTINEL_DB_PATH=/app/data/traffic.db
+      - SENTINEL_TARGET_URL=${SENTINEL_TARGET_URL:-https://aai-ji-honey.vercel.app}
+      - SENTINEL_ADMIN_TOKEN=${SENTINEL_ADMIN_TOKEN:-}
+      - SENTINEL_ALLOW_PRIVATE_UPSTREAM=${SENTINEL_ALLOW_PRIVATE_UPSTREAM:-false}
+    volumes:
+      - sentinel_data:/app/data
+      - sentinel_alerts:/app/backend/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 25s
+
+volumes:
+  sentinel_data:
+  sentinel_alerts:

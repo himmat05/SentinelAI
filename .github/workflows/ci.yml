@@ -1,0 +1,36 @@
+name: SentinelAI CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-and-verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install runtime and test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt pytest
+
+      - name: Verify Python syntax compilation
+        run: |
+          python -m compileall -q backend network intelligence
+
+      - name: Run SentinelAI automated security & proxy test suite
+        env:
+          SENTINEL_ALLOW_PRIVATE_UPSTREAM: "false"
+        run: |
+          pytest tests -v

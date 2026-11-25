@@ -1,0 +1,17 @@
+.venv/
+venv/
+.git/
+__pycache__/
+*.pyc
+*.pyo
+*.log
+.env
+data/*.db*
+backend/data/
+ml/data/raw/
+ml/data/interim/
+ml/data/processed/*.parquet
+ml/notebooks/
+node_modules/
+.vscode/
+.idea/

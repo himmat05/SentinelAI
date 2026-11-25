@@ -3,6 +3,8 @@
  * Interfaces with the FastAPI Autonomous Cyber Defense backend.
  */
 
+import { getOperatorHeaders } from "./security_utils.js";
+
 // Determine base API endpoint
 const API_BASE = window.location.port === "8000" 
   ? "" 
@@ -88,6 +90,24 @@ export class SentinelAPI {
     });
 
     if (!res.ok) throw new Error(`Batch inference failed: ${res.statusText}`);
+    return await res.json();
+  }
+
+  /**
+   * Upload and analyze a classic .pcap packet capture
+   */
+  static async analyzePcap(file) {
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await fetch(`${API_BASE}/api/predict/pcap`, {
+      method: "POST",
+      headers: getOperatorHeaders(),
+      body: formData
+    });
+    if (!res.ok) {
+      const errBody = await res.json().catch(() => ({ detail: res.statusText }));
+      throw new Error(errBody.detail || `PCAP analysis failed (${res.status})`);
+    }
     return await res.json();
   }
 

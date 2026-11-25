@@ -354,10 +354,17 @@
         </div>
 
         <!-- Target Controller Grid -->
-        <div style="display: grid; grid-template-columns: 2fr 1fr auto; gap: 0.75rem; align-items: end; margin-bottom: 1rem;">
+        <div style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 0.75rem; align-items: end; margin-bottom: 0.85rem;">
           <div class="form-group" style="margin: 0;">
-            <label class="form-label">Protected Upstream Website URL</label>
+            <label class="form-label">Protected Upstream Website URL (SSRF-Guarded)</label>
             <input type="text" id="monitor-target-url-input" class="form-control" value="https://aai-ji-honey.vercel.app" placeholder="https://your-website.com" />
+          </div>
+          <div class="form-group" style="margin: 0;">
+            <label class="form-label">Shield Enforcement Mode</label>
+            <select id="monitor-shield-mode-select" class="form-control">
+              <option value="enforce" selected>🛡️ Enforce (Block + Jail)</option>
+              <option value="shadow">👁️ Shadow (Audit Only)</option>
+            </select>
           </div>
           <div class="form-group" style="margin: 0;">
             <label class="form-label">Local Protected Gateway</label>
@@ -373,9 +380,28 @@
           </div>
         </div>
 
+        <!-- Operator Security Token & Webhook Ops Bar -->
+        <div style="display: grid; grid-template-columns: 1.2fr 1.6fr; gap: 0.75rem; padding: 0.75rem; background: rgba(15, 23, 42, 0.55); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); margin-bottom: 0.85rem;">
+          <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+            <span id="monitor-auth-status-badge" class="tier-badge ok" style="font-size: 0.7rem;">🔓 AUTH</span>
+            <input type="password" id="monitor-operator-token-input" class="form-control" placeholder="Operator X-Sentinel-Token (if set)" style="flex: 1; min-width: 160px; font-size: 0.78rem; padding: 0.35rem 0.6rem;" />
+            <button class="btn-cyber" id="btn-save-operator-token" style="font-size: 0.75rem; padding: 0.35rem 0.75rem;">
+              Set Token
+            </button>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+            <label style="display: flex; align-items: center; gap: 0.35rem; font-size: 0.75rem; color: var(--text-secondary); cursor: pointer;">
+              <input type="checkbox" id="monitor-webhook-enabled-checkbox" /> Webhook
+            </label>
+            <input type="text" id="monitor-webhook-url-input" class="form-control" placeholder="https://discord.com/api/webhooks/... or Slack webhook" style="flex: 1; min-width: 180px; font-size: 0.78rem; padding: 0.35rem 0.6rem;" />
+            <button class="btn-cyber" id="btn-save-webhook" style="font-size: 0.75rem; padding: 0.35rem 0.7rem;">Save</button>
+            <button class="btn-cyber" id="btn-test-webhook" style="font-size: 0.75rem; padding: 0.35rem 0.7rem; color: var(--accent-cyan);">Test Ping</button>
+          </div>
+        </div>
+
         <!-- Action Control Buttons -->
         <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border-subtle);">
-          <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+          <div style="display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap;">
             <button class="btn-cyber" id="btn-toggle-heartbeat">
               ▶️ Start 24/7 Heartbeat
             </button>
@@ -383,22 +409,14 @@
               ✅ Test Clean Visit
             </button>
             
-            <span style="font-size: 0.75rem; color: var(--text-muted); margin-left: 0.5rem;">Test Attack:</span>
-            <button class="btn-cyber btn-sim-attack" data-type="sqli" style="color: #fca5a5; border-color: rgba(239, 68, 68, 0.4); font-size: 0.75rem;">
-              🚨 SQLi
-            </button>
-            <button class="btn-cyber btn-sim-attack" data-type="xss" style="color: #fca5a5; border-color: rgba(239, 68, 68, 0.4); font-size: 0.75rem;">
-              💉 XSS
-            </button>
-            <button class="btn-cyber btn-sim-attack" data-type="traversal" style="color: #fca5a5; border-color: rgba(239, 68, 68, 0.4); font-size: 0.75rem;">
-              📁 Traversal
-            </button>
-            <button class="btn-cyber btn-sim-attack" data-type="sensitive_probe" style="color: #fca5a5; border-color: rgba(239, 68, 68, 0.4); font-size: 0.75rem;">
-              🔑 .env Probe
-            </button>
-            <button class="btn-cyber btn-sim-attack" data-type="scanner" style="color: #fca5a5; border-color: rgba(239, 68, 68, 0.4); font-size: 0.75rem;">
-              🤖 Scanner
-            </button>
+            <span style="font-size: 0.75rem; color: var(--text-muted); margin-left: 0.35rem;">Simulate:</span>
+            <button class="btn-cyber btn-sim-attack" data-type="sqli" style="color: #fca5a5; border-color: rgba(239, 68, 68, 0.4); font-size: 0.72rem; padding: 0.35rem 0.65rem;">🚨 SQLi</button>
+            <button class="btn-cyber btn-sim-attack" data-type="json_sqli" style="color: #fca5a5; border-color: rgba(239, 68, 68, 0.4); font-size: 0.72rem; padding: 0.35rem 0.65rem;">📦 JSON SQLi</button>
+            <button class="btn-cyber btn-sim-attack" data-type="xss" style="color: #fca5a5; border-color: rgba(239, 68, 68, 0.4); font-size: 0.72rem; padding: 0.35rem 0.65rem;">💉 Encoded XSS</button>
+            <button class="btn-cyber btn-sim-attack" data-type="double_encoded" style="color: #fca5a5; border-color: rgba(239, 68, 68, 0.4); font-size: 0.72rem; padding: 0.35rem 0.65rem;">🧬 %252e Traversal</button>
+            <button class="btn-cyber btn-sim-attack" data-type="sensitive_probe" style="color: #fca5a5; border-color: rgba(239, 68, 68, 0.4); font-size: 0.72rem; padding: 0.35rem 0.65rem;">🔑 .env Probe</button>
+            <button class="btn-cyber btn-sim-attack" data-type="rce" style="color: #fca5a5; border-color: rgba(239, 68, 68, 0.4); font-size: 0.72rem; padding: 0.35rem 0.65rem;">💻 RCE</button>
+            <button class="btn-cyber btn-sim-attack" data-type="scanner" style="color: #fca5a5; border-color: rgba(239, 68, 68, 0.4); font-size: 0.72rem; padding: 0.35rem 0.65rem;">🤖 Scanner</button>
           </div>
           <div>
             <button class="btn-cyber" id="btn-clear-traffic-logs" style="font-size: 0.75rem; color: var(--text-muted);">
@@ -423,6 +441,11 @@
         <div class="telemetry-item">
           <span class="telemetry-label">Threats Blocked (403):</span>
           <span class="telemetry-value" id="stat-mon-blocked" style="color: var(--accent-red);">0</span>
+        </div>
+        <div class="telemetry-sep"></div>
+        <div class="telemetry-item">
+          <span class="telemetry-label">Shadow Audits:</span>
+          <span class="telemetry-value" id="stat-mon-shadow" style="color: var(--accent-amber);">0</span>
         </div>
         <div class="telemetry-sep"></div>
         <div class="telemetry-item">
@@ -487,6 +510,56 @@
             <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 1.25rem;">No IP sockets currently quarantined. Perimeter clear.</td></tr>
           </tbody>
         </table>
+
+        <!-- Edge Firewall Rule Export Bar -->
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem; margin-top: 1rem; padding-top: 0.85rem; border-top: 1px solid var(--border-subtle);">
+          <span style="font-size: 0.78rem; color: var(--text-secondary); font-weight: 700;">Export Quarantined IPs as Edge Firewall Rules:</span>
+          <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <button class="btn-cyber" id="btn-export-nginx" style="font-size: 0.75rem;">📄 Nginx Deny</button>
+            <button class="btn-cyber" id="btn-export-iptables" style="font-size: 0.75rem;">🐧 iptables</button>
+            <button class="btn-cyber" id="btn-export-cloudflare" style="font-size: 0.75rem;">☁️ Cloudflare WAF</button>
+          </div>
+        </div>
+        <div id="rules-export-preview-box" style="display: none; margin-top: 0.75rem; background: #060911; border: 1px solid var(--border-medium); border-radius: 8px; padding: 0.85rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+            <span style="font-size: 0.75rem; color: var(--accent-cyan); font-weight: 700;">Generated Mitigation Rules</span>
+            <div style="display: flex; gap: 0.4rem;">
+              <button class="btn-cyber" id="btn-copy-rules" style="font-size: 0.7rem; padding: 0.2rem 0.6rem;">📋 Copy</button>
+              <button class="btn-cyber" id="btn-close-rules" style="font-size: 0.7rem; padding: 0.2rem 0.6rem;">Close</button>
+            </div>
+          </div>
+          <pre id="rules-export-code" style="margin: 0; font-family: var(--font-mono); font-size: 0.75rem; color: #e2e8f0; white-space: pre-wrap; max-height: 180px; overflow-y: auto;"></pre>
+        </div>
+      </div>
+
+      <!-- Trusted IP Allowlist Card -->
+      <div class="soc-card" style="margin-bottom: 1.25rem;">
+        <div class="soc-card-header">
+          <div>
+            <div class="soc-card-title" style="color: var(--accent-cyan);">
+              <span>✅</span> Trusted IP Allowlist (Persistent Bypass)
+            </div>
+            <div class="soc-card-subtitle">Allowlisted operator/monitor IPs bypass quarantine &amp; active drops cleanly.</div>
+          </div>
+          <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <input type="text" id="allowlist-ip-input" class="form-control" placeholder="e.g. 203.0.113.5" style="width: 160px; font-size: 0.78rem; padding: 0.35rem 0.6rem;" />
+            <input type="text" id="allowlist-note-input" class="form-control" placeholder="Label (optional)" style="width: 150px; font-size: 0.78rem; padding: 0.35rem 0.6rem;" />
+            <button class="btn-cyber btn-cyber-primary" id="btn-add-allowlist" style="font-size: 0.75rem; padding: 0.35rem 0.75rem; white-space: nowrap;">+ Allow IP</button>
+          </div>
+        </div>
+        <table class="alert-feed-table">
+          <thead>
+            <tr>
+              <th>Allowlisted IP</th>
+              <th>Note / Label</th>
+              <th>Added At</th>
+              <th style="text-align: right;">Action</th>
+            </tr>
+          </thead>
+          <tbody id="monitor-allowlist-tbody">
+            <tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 0.85rem;">No allowlisted IPs configured.</td></tr>
+          </tbody>
+        </table>
       </div>
 
       <!-- Live Streamed Request Feed Table -->
@@ -496,7 +569,7 @@
             <span>🚨</span> Real-Time Monitored Traffic Feed (Persistent Time-Series)
           </div>
           <div class="soc-card-subtitle">
-            Every connection hitting the protected gateway is logged below with millisecond precision
+            Every connection hitting the protected gateway is logged below with one-click RAG threat investigation
           </div>
         </div>
 
@@ -510,12 +583,27 @@
               <th>HTTP Status</th>
               <th>Security Verdict</th>
               <th style="text-align: right;">Latency</th>
+              <th style="text-align: right;">RAG Ops</th>
             </tr>
           </thead>
           <tbody id="monitor-logs-tbody">
             <!-- Dynamically populated -->
           </tbody>
         </table>
+      </div>
+
+      <!-- RAG Incident Report Modal -->
+      <div id="monitor-incident-modal" style="display: none; position: fixed; inset: 0; background: rgba(2, 6, 23, 0.82); backdrop-filter: blur(6px); z-index: 9500; align-items: center; justify-content: center; padding: 1.5rem;">
+        <div style="background: #0f172a; border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 14px; max-width: 720px; width: 100%; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px rgba(0,0,0,0.6);">
+          <div style="padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-weight: 800; color: var(--text-primary);">🤖 Autonomous RAG Threat Investigation Brief</span>
+            <div style="display: flex; gap: 0.5rem;">
+              <button class="btn-cyber btn-cyber-primary" id="btn-download-incident-md" style="font-size: 0.75rem; padding: 0.35rem 0.75rem;">⬇ Download .md Report</button>
+              <button class="btn-cyber" id="btn-close-incident-modal" style="font-size: 0.75rem; padding: 0.35rem 0.75rem;">Close</button>
+            </div>
+          </div>
+          <div id="monitor-incident-body" style="padding: 1.25rem; overflow-y: auto;"></div>
+        </div>
       </div>
     </section>
 
@@ -583,6 +671,42 @@
             <tbody id="batch-breakdown-rows">
               <!-- Dynamically populated -->
             </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PCAP Network Capture Analyzer Card -->
+      <div class="soc-card" style="margin-bottom: 1.5rem;">
+        <div class="soc-card-header">
+          <div>
+            <div class="soc-card-title">
+              <span>📡</span> PCAP Packet Capture Flow Reconstructor &amp; ML Inspector
+            </div>
+            <div class="soc-card-subtitle">Upload a classic libpcap (<code>.pcap</code>) file to reconstruct 5-tuple TCP/UDP sessions and run 3-Tier ML inspection</div>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem;">
+          <input type="file" id="pcap-file-input" accept=".pcap,.cap" class="form-control" style="max-width: 340px;" />
+          <button class="btn-cyber btn-cyber-primary" id="btn-analyze-pcap">
+            <span>🔬</span> Extract &amp; Inspect PCAP Flows
+          </button>
+        </div>
+
+        <div id="pcap-results-container" style="display: none;">
+          <div id="pcap-summary-banner" style="padding: 0.75rem 1rem; background: rgba(15,23,42,0.7); border: 1px solid var(--border-subtle); border-radius: 8px; margin-bottom: 1rem; font-size: 0.85rem;"></div>
+          <table class="alert-feed-table">
+            <thead>
+              <tr>
+                <th>5-Tuple Session</th>
+                <th>Proto</th>
+                <th>Fwd / Bwd Pkts</th>
+                <th>Classification</th>
+                <th>Action</th>
+                <th style="text-align: right;">Confidence</th>
+              </tr>
+            </thead>
+            <tbody id="pcap-flows-tbody"></tbody>
           </table>
         </div>
       </div>
