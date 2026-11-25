@@ -297,6 +297,10 @@ async def proxy_gateway(request: Request, path: str = ""):
         method = request.method
         req_headers = dict(request.headers)
 
+        # Pass browser CORS OPTIONS preflights cleanly without triggering rate-limits
+        if method == "OPTIONS":
+            return Response(status_code=204)
+
         shield_enabled = _proxy_config["shield_enabled"]
         shield_mode = _proxy_config["shield_mode"]
         is_allowlisted = quarantine_manager.is_allowlisted(client_ip)
@@ -472,9 +476,12 @@ async def proxy_gateway(request: Request, path: str = ""):
         forward_headers = {
             k: v
             for k, v in req_headers.items()
-            if k.lower() not in ["host", "content-length", "x-sentinel-token"]
+            if k.lower() not in ["host", "content-length", "x-sentinel-token", "x-sentinel-origin-secret"]
         }
         forward_headers["host"] = parsed_target.netloc
+        origin_secret = os.environ.get("SENTINEL_ORIGIN_SECRET", "").strip()
+        if origin_secret:
+            forward_headers["x-sentinel-origin-secret"] = origin_secret
 
         client = get_http_client()
         try:
@@ -522,7 +529,18 @@ async def proxy_gateway(request: Request, path: str = ""):
             response_headers = {
                 k: v
                 for k, v in upstream_res.headers.items()
-                if k.lower() not in ["content-encoding", "transfer-encoding", "content-length", "x-powered-by", "server"]
+                if k.lower() not in [
+                    "content-encoding",
+                    "transfer-encoding",
+                    "content-length",
+                    "x-powered-by",
+                    "server",
+                    "access-control-allow-origin",
+                    "access-control-allow-credentials",
+                    "access-control-allow-methods",
+                    "access-control-allow-headers",
+                    "access-control-expose-headers",
+                ]
             }
             response_headers["x-protected-by"] = "SentinelAI-Autonomous-SOC-Shield"
             response_headers["x-sentinel-mode"] = shield_mode

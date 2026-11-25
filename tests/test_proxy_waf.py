@@ -27,7 +27,12 @@ def _mock_upstream_handler(request: httpx.Request) -> httpx.Response:
     )
     return httpx.Response(
         status_code=200,
-        headers={"content-type": "text/html; charset=utf-8", "x-powered-by": "Express"},
+        headers={
+            "content-type": "text/html; charset=utf-8",
+            "x-powered-by": "Express",
+            "access-control-allow-origin": "https://aai-ji-honey.vercel.app",
+            "x-echo-origin-secret": request.headers.get("x-sentinel-origin-secret", ""),
+        },
         text=html_body,
     )
 
@@ -77,14 +82,22 @@ class TestProxyAndWaf(unittest.TestCase):
         gw_module.update_proxy_settings(shield_enabled=True, shield_mode="enforce", rewrite_html=True)
 
     def test_clean_request_and_html_rewriting(self):
-        res = self.client.get("/gateway/", headers={"x-forwarded-for": "198.51.100.1"})
-        self.assertEqual(res.status_code, 200)
-        self.assertEqual(res.headers.get("x-protected-by"), "SentinelAI-Autonomous-SOC-Shield")
-        self.assertNotIn("x-powered-by", res.headers)
-        # Root-relative assets must be rewritten under /gateway/, while external URLs stay untouched
-        self.assertIn('href="/gateway/assets/style.css"', res.text)
-        self.assertIn('src="/gateway/assets/app.js"', res.text)
-        self.assertIn('src="https://cdn.example.com/lib.js"', res.text)
+        os.environ["SENTINEL_ORIGIN_SECRET"] = "option-b-secret"
+        try:
+            res = self.client.get(
+                "/gateway/",
+                headers={"x-forwarded-for": "198.51.100.1", "origin": "https://aai-ji-honey.vercel.app"},
+            )
+            self.assertEqual(res.status_code, 200)
+            self.assertEqual(res.headers.get("x-protected-by"), "SentinelAI-Autonomous-SOC-Shield")
+            self.assertEqual(res.headers.get("x-echo-origin-secret"), "option-b-secret")
+            self.assertNotIn("x-powered-by", res.headers)
+            # Root-relative assets must be rewritten under /gateway/, while external URLs stay untouched
+            self.assertIn('href="/gateway/assets/style.css"', res.text)
+            self.assertIn('src="/gateway/assets/app.js"', res.text)
+            self.assertIn('src="https://cdn.example.com/lib.js"', res.text)
+        finally:
+            os.environ.pop("SENTINEL_ORIGIN_SECRET", None)
 
     def test_blocks_inline_comment_sqli_and_jails_ip(self):
         attacker = "203.0.113.10"
